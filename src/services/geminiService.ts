@@ -144,7 +144,11 @@ ${params.options.stemLesson ? 'Nếu là bài học STEM, các hoạt động ph
     }
 
     // Pedagogical Intelligent Fallback Generator
-    onProgress?.('Đang tích hợp các khung Thông tư 02/2025, QĐ 2422 và STEM 3089...');
+    if (params.coreContent && params.coreContent.trim().length > 20) {
+      onProgress?.('⚠️ Không có API Key Gemini – Bài soạn sẽ dùng nội dung bạn cung cấp kết hợp mẫu chuẩn CV 5512. Nhập API Key để AI soạn bài chi tiết hơn.');
+    } else {
+      onProgress?.('Đang tích hợp các khung Thông tư 02/2025, QĐ 2422 và STEM 3089...');
+    }
     await new Promise((r) => setTimeout(r, 600));
     onProgress?.('Tự động tạo tiến trình sư phạm và sơ đồ tư duy...');
     await new Promise((r) => setTimeout(r, 500));
@@ -318,7 +322,7 @@ ${params.options.stemLesson ? 'Nếu là bài học STEM, các hoạt động ph
             : `Học sinh tự lực khám phá và chiếm lĩnh kiến thức cốt lõi thông qua phương pháp: ${params.options.teachingMethod || 'Dạy học giải quyết vấn đề'}.`,
           content: isEn
             ? 'Group research with Worksheet 1 and scientific observation.'
-            : `HS nghiên cứu SGK, làm việc nhóm với Phiếu học tập số 1 ${params.options.customIntegration ? `(Lồng ghép: ${params.options.customIntegration})` : ''}.`,
+            : `HS nghiên cứu ${params.coreContent && params.coreContent.trim().length > 20 ? 'nội dung tài liệu giáo viên cung cấp' : 'SGK'}, làm việc nhóm với Phiếu học tập số 1 ${params.options.customIntegration ? `(Lồng ghép: ${params.options.customIntegration})` : ''}.`,
           product: isEn ? 'Completed worksheet and core formula notes.' : 'Kết quả hoàn thành trên phiếu học tập của các nhóm.',
           implementation: {
             step1Teacher: isEn

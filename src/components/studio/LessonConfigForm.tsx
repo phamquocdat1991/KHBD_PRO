@@ -16,6 +16,8 @@ export const LessonConfigForm: React.FC = () => {
   const [coreContent, setCoreContent] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; size: string }[]>([]);
   const [fileAnalysisStatus, setFileAnalysisStatus] = useState('');
+  const [extractedFileContent, setExtractedFileContent] = useState('');
+  const [isReadingFile, setIsReadingFile] = useState(false);
 
   // Advanced Options
   const [options, setOptions] = useState<AdvancedOptions>({
@@ -76,13 +78,65 @@ export const LessonConfigForm: React.FC = () => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    setIsReadingFile(true);
+    setFileAnalysisStatus('Đang đọc nội dung tệp...');
+
     const newFiles = Array.from(files).map((f) => ({
       name: f.name,
       size: (f.size / (1024 * 1024)).toFixed(2) + ' MB',
     }));
-
     setUploadedFiles((prev) => [...prev, ...newFiles]);
-    setFileAnalysisStatus(`✓ Đã đọc ${files.length} tệp (OCR & trích xuất dữ liệu thành công)`);
+
+    // Actually read the file contents using FileReader
+    const readPromises = Array.from(files).map((file) => {
+      return new Promise<string>((resolve) => {
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        const textExts = ['txt', 'md', 'csv', 'text', 'log'];
+
+        if (textExts.includes(ext)) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const text = ev.target?.result as string;
+            resolve(`\n--- [Nội dung trích xuất từ: ${file.name}] ---\n${text}\n--- [Hết file: ${file.name}] ---\n`);
+          };
+          reader.onerror = () => {
+            resolve(`\n[Không đọc được file: ${file.name}]\n`);
+          };
+          reader.readAsText(file, 'UTF-8');
+        } else if (ext === 'docx' || ext === 'pdf') {
+          resolve(`\n[Lưu ý: File ${file.name} (${ext.toUpperCase()}) không thể đọc trực tiếp trên trình duyệt. Vui lòng copy nội dung từ file và dán vào ô "Nội dung cốt lõi" phía trên để AI soạn bài chính xác hơn.]\n`);
+        } else {
+          resolve(`\n[File ${file.name}: Định dạng chưa hỗ trợ đọc tự động. Hãy dán nội dung vào ô "Nội dung cốt lõi".]\n`);
+        }
+      });
+    });
+
+    Promise.all(readPromises).then((results) => {
+      const allContent = results.join('\n');
+      setExtractedFileContent((prev) => prev + allContent);
+
+      const textFiles = Array.from(files).filter((f) => {
+        const ext = f.name.split('.').pop()?.toLowerCase() || '';
+        return ['txt', 'md', 'csv', 'text', 'log'].includes(ext);
+      });
+      const otherFiles = Array.from(files).filter((f) => {
+        const ext = f.name.split('.').pop()?.toLowerCase() || '';
+        return !['txt', 'md', 'csv', 'text', 'log'].includes(ext);
+      });
+
+      let statusMsg = '';
+      if (textFiles.length > 0) {
+        statusMsg += `✅ Đã đọc nội dung ${textFiles.length} tệp text thành công. `;
+      }
+      if (otherFiles.length > 0) {
+        statusMsg += `⚠️ ${otherFiles.length} tệp (${otherFiles.map(f => f.name).join(', ')}) cần dán nội dung thủ công vào ô "Nội dung cốt lõi".`;
+      }
+      if (!statusMsg) {
+        statusMsg = '✅ Đã xử lý tệp tải lên.';
+      }
+      setFileAnalysisStatus(statusMsg);
+      setIsReadingFile(false);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,7 +155,7 @@ export const LessonConfigForm: React.FC = () => {
       tableFormat,
       language,
       options,
-      coreContent: coreContent + (uploadedFiles.length > 0 ? `\n[Tài liệu đính kèm: ${uploadedFiles.map((f) => f.name).join(', ')}]` : ''),
+      coreContent: (coreContent + '\n' + extractedFileContent).trim() || 'Sử dụng kiến thức SGK chuẩn hiện hành',
     });
   };
 
@@ -470,7 +524,7 @@ export const LessonConfigForm: React.FC = () => {
           </label>
 
           {fileAnalysisStatus && (
-            <div className="mt-2 text-xs text-emerald-600 font-semibold flex items-center gap-1.5">
+            <div className={`mt-2 text-xs font-semibold flex items-center gap-1.5 ${fileAnalysisStatus.includes('⚠️') ? 'text-amber-600' : 'text-emerald-600'}`}>
               <Check className="w-3.5 h-3.5" />
               <span>{fileAnalysisStatus}</span>
             </div>
@@ -500,7 +554,7 @@ export const LessonConfigForm: React.FC = () => {
 
           <button
             type="submit"
-            disabled={isGenerating}
+            disabled={isGenerating || isReadingFile}
             className="w-full py-4 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-sm shadow-md shadow-sky-600/25 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-3"
           >
             {isGenerating ? (
