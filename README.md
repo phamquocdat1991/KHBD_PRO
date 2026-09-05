@@ -1,0 +1,1 @@
+﻿# KHBD AI PRO – Kế Hoạch Bài Dạy AI (Chuẩn CV 5512)`n`n> Website: https://khbd-ai-one.vercel.app`n> Tác giả: Thầy Phạm Quốc Đạt`n`n## Công nghệ`n- React 19, TypeScript, Vite`n- Tailwind CSS, Lucide Icons`n- Google Gemini AI API`n- Vercel CI/CD`n
