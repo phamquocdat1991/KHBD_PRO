@@ -4,8 +4,8 @@ import { useLesson } from '../../context/LessonContext';
 import { Folder, History, PlusCircle, ChevronRight, ChevronLeft, BookOpen, Clock, Heart, Award } from 'lucide-react';
 
 export const SidebarNav: React.FC = () => {
-  const { currentUser, openProfileModal } = useAuth();
-  const { library, activeLesson, setActiveLesson, setActiveView, selectedModel } = useLesson();
+  const { currentUser, openProfileModal, geminiApiKey } = useAuth();
+  const { library, activeLesson, setActiveLesson, setActiveView, selectedModel, startNewLesson, setStudioTab, setFilterSubject, setFilterGrade, setSearchQuery } = useLesson();
   const [collapsed, setCollapsed] = useState(false);
 
   // Group by subjects
@@ -15,17 +15,18 @@ export const SidebarNav: React.FC = () => {
   }, {});
 
   const handleNewPlan = () => {
-    setActiveView('studio');
+    startNewLesson();
   };
 
   return (
     <aside
-      className={`relative flex flex-col border-r border-slate-200 bg-white transition-all duration-300 no-print ${
+      className={`relative hidden md:flex shrink-0 flex-col border-r border-slate-200 bg-white transition-all duration-300 no-print ${
         collapsed ? 'w-16' : 'w-72'
       }`}
     >
       {/* Collapse Toggle Button */}
       <button
+        aria-label={collapsed ? "Mở thanh bên" : "Thu gọn thanh bên"}
         onClick={() => setCollapsed(!collapsed)}
         className="absolute -right-3 top-5 z-20 flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-sm"
       >
@@ -82,7 +83,7 @@ export const SidebarNav: React.FC = () => {
               {Object.entries(subjectCounts).map(([subj, count]) => (
                 <div
                   key={subj}
-                  onClick={() => setActiveView('library')}
+                  onClick={() => { setFilterSubject(subj); setFilterGrade('all'); setSearchQuery(''); setActiveView('library'); }}
                   className="flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-sky-700 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center gap-2 truncate">
@@ -114,6 +115,7 @@ export const SidebarNav: React.FC = () => {
                   key={lesson.id}
                   onClick={() => {
                     setActiveLesson(lesson);
+                    setStudioTab('preview');
                     setActiveView('studio');
                   }}
                   title={lesson.title}

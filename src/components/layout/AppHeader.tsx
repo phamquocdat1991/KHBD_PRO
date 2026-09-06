@@ -9,7 +9,7 @@ export const AppHeader: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-xl no-print shadow-xs">
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 min-h-16 py-2 flex flex-wrap items-center justify-between gap-3">
         {/* Left: Brand */}
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveView('studio')}>
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 shadow-md shadow-sky-500/20">
@@ -21,7 +21,7 @@ export const AppHeader: React.FC = () => {
                 KHBD AI PRO
               </span>
               <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                v2.0
+                v2.0.1
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
@@ -65,7 +65,7 @@ export const AppHeader: React.FC = () => {
 
           <button
             onClick={() => setActiveView('guidelines')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all hidden md:flex ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               activeView === 'guidelines'
                 ? 'bg-white text-sky-700 shadow-sm font-bold border border-slate-200/60'
                 : 'text-slate-600 hover:text-slate-900'
@@ -79,9 +79,10 @@ export const AppHeader: React.FC = () => {
         {/* Right: Model Selector & Teacher Profile */}
         <div className="flex items-center gap-3">
           {/* AI Model Badge */}
-          <div className="hidden lg:flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs">
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs">
             <Bot className="w-4 h-4 text-sky-600 animate-pulse-subtle" />
             <select
+              aria-label="Mô hình Gemini"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value as any)}
               className="bg-transparent text-slate-700 text-xs font-semibold focus:outline-none cursor-pointer"

@@ -9,6 +9,8 @@ export const LessonLibraryView: React.FC = () => {
   const { currentUser } = useAuth();
   const {
     library,
+    startNewLesson,
+    setStudioTab,
     setActiveLesson,
     setActiveView,
     deleteLessonPlan,
@@ -27,6 +29,7 @@ export const LessonLibraryView: React.FC = () => {
     const matchesSearch =
       lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lesson.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lesson.textbook.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lesson.coreContent.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesGrade =
@@ -45,6 +48,7 @@ export const LessonLibraryView: React.FC = () => {
 
   const handleOpenLesson = (lesson: LessonPlan) => {
     setActiveLesson(lesson);
+    setStudioTab('preview');
     setActiveView('studio');
   };
 
@@ -55,13 +59,12 @@ export const LessonLibraryView: React.FC = () => {
 
   const handleShare = (e: React.MouseEvent, lesson: LessonPlan) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(window.location.href);
-    alert(`Đã sao chép liên kết chia sẻ bài dạy: "${lesson.title}" cho Tổ chuyên môn!`);
+    alert('Bài dạy đang lưu trên trình duyệt này. Để chia sẻ đúng nội dung, hãy xuất Word và gửi tệp cho đồng nghiệp. Chưa có dịch vụ chia sẻ trực tuyến.');
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm('Thầy/Cô có chắc chắn muốn xóa bài dạy này khỏi thư viện đám mây?')) {
+    if (confirm('Thầy/Cô có chắc chắn muốn xóa bài dạy này khỏi thư viện trên trình duyệt này?')) {
       deleteLessonPlan(id);
     }
   };
@@ -72,18 +75,18 @@ export const LessonLibraryView: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-            <span>Kho Kế Hoạch Bài Dạy Đám Mây</span>
+            <span>Kho Kế Hoạch Bài Dạy</span>
             <span className="text-xs px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 font-bold">
               {filteredLessons.length} bài soạn
             </span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Quản lý, đồng bộ và chia sẻ giáo án chuẩn Công văn 5512 trong toàn trường & tổ chuyên môn
+            Bài dạy lưu trên trình duyệt này. Xuất Word để sao lưu hoặc chia sẻ với đồng nghiệp.
           </p>
         </div>
 
         <button
-          onClick={() => setActiveView('studio')}
+          onClick={startNewLesson}
           className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.02]"
         >
           <Plus className="w-5 h-5" />

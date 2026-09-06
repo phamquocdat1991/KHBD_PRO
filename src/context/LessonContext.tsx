@@ -11,6 +11,10 @@ interface LessonContextType {
   activeView: 'studio' | 'library' | 'guidelines';
   isGenerating: boolean;
   generationProgress: string;
+  generationError: string;
+  studioTab: 'form' | 'preview';
+  setStudioTab: (tab: 'form' | 'preview') => void;
+  startNewLesson: () => void;
   selectedModel: GeminiModelId;
   searchQuery: string;
   filterGrade: string;
@@ -40,7 +44,7 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const saved = localStorage.getItem(LESSON_LIBRARY_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
       return SAMPLE_LESSONS;
     } catch {
@@ -49,12 +53,15 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const [activeLesson, setActiveLesson] = useState<LessonPlan | null>(() => {
-    return library[0] || SAMPLE_LESSONS[0];
+    return library[0] || null;
   });
 
   const [activeView, setActiveView] = useState<'studio' | 'library' | 'guidelines'>('studio');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState('');
+  const [generationError, setGenerationError] = useState('');
+  const [studioTab, setStudioTab] = useState<'form' | 'preview'>('preview');
+  const startNewLesson = () => { setActiveView('studio'); setStudioTab('form'); setGenerationError(''); };
   const [selectedModel, setSelectedModel] = useState<GeminiModelId>('gemini-3.8-flash');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterGrade, setFilterGrade] = useState('all');
@@ -64,12 +71,14 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       localStorage.setItem(LESSON_LIBRARY_KEY, JSON.stringify(library));
     } catch (e) {
-      console.error('Failed to persist library:', e);
+      setGenerationError('Không lưu được thư viện trên trình duyệt (bộ nhớ đầy hoặc bị chặn). Hãy xuất Word để giữ bản bài soạn.');
     }
   }, [library]);
 
   const createLessonPlan = async (params: Omit<GenerateParams, 'apiKey' | 'modelId'>) => {
+    if (isGenerating) return;
     setIsGenerating(true);
+    setGenerationError('');
     setGenerationProgress('Bắt đầu khởi tạo cấu trúc...');
     try {
       const newPlan = await GeminiService.generateLessonPlan(
@@ -84,6 +93,7 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setLibrary((prev) => [newPlan, ...prev]);
       setActiveLesson(newPlan);
       setActiveView('studio');
+      setStudioTab('preview');
 
       // Celebration confetti
       try {
@@ -95,7 +105,7 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
       } catch {}
     } catch (err) {
-      console.error('Error in createLessonPlan:', err);
+      setGenerationError(err instanceof Error ? err.message : 'Không tạo được bài dạy. Hãy thử lại.');
     } finally {
       setIsGenerating(false);
       setGenerationProgress('');
@@ -122,7 +132,7 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!target) return;
     const clone: LessonPlan = {
       ...target,
-      id: 'lesson-' + Date.now(),
+      id: 'lesson-' + crypto.randomUUID(),
       title: `${target.title} (Bản sao)`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -136,6 +146,7 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (found) {
       setActiveLesson(found);
       setActiveView('studio');
+      setStudioTab('preview');
     }
   };
 
@@ -147,6 +158,10 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         activeView,
         isGenerating,
         generationProgress,
+        generationError,
+        studioTab,
+        setStudioTab,
+        startNewLesson,
         selectedModel,
         searchQuery,
         filterGrade,

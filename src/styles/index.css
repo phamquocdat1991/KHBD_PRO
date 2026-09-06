@@ -93,3 +93,14 @@
     page-break-before: always;
   }
 }
+
+@media print {
+  @page { size: A4; margin: 15mm; }
+  #root, #root > div, #root > div > div { display: block !important; overflow: visible !important; }
+  .print-document-wrap { overflow: visible !important; }
+  .a4-document-sheet { padding: 0 !important; }
+  table { page-break-inside: auto; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  h2, h3, h4 { break-after: avoid; }
+}
