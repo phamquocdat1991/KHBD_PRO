@@ -77,9 +77,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginAsGuestByok = (apiKey: string) => {
-    if (apiKey) {
-      setGeminiApiKey(apiKey);
-    }
+    const key = apiKey.trim();
+    if (!key) throw new Error('Vui lòng nhập Gemini API Key; khóa không được chỉ chứa khoảng trắng.');
+    setGeminiApiKey(key);
     const guestUser: TeacherProfile = {
       id: 'guest-' + Date.now(),
       name: 'Giáo viên Khách (BYOK)',

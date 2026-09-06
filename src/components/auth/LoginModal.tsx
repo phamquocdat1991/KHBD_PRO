@@ -1,41 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { X, Sparkles, Mail, Lock, Key, ShieldCheck, Award } from 'lucide-react';
+import { X, Sparkles, Key, ShieldCheck, Award } from 'lucide-react';
 
 export const LoginModal: React.FC = () => {
-  const { isLoginModalOpen, closeLoginModal, loginWithGoogle, loginWithEmail, loginAsGuestByok, geminiApiKey } = useAuth();
+  const { isLoginModalOpen, closeLoginModal, loginAsGuestByok, geminiApiKey } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'account' | 'byok'>('byok');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [customKey, setCustomKey] = useState(geminiApiKey);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setCustomKey(isLoginModalOpen ? geminiApiKey : '');
+    setError('');
+    if (isLoginModalOpen) setActiveTab('byok');
+  }, [isLoginModalOpen, geminiApiKey]);
 
   if (!isLoginModalOpen) return null;
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    try {
-      await loginWithGoogle();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setLoading(true);
-    try {
-      await loginWithEmail(email, password);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleByokSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loginAsGuestByok(customKey);
+    try {
+      loginAsGuestByok(customKey);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Không lưu được API Key. Hãy thử lại.');
+    }
   };
 
   return (
@@ -115,7 +103,7 @@ export const LoginModal: React.FC = () => {
                   autoComplete="off"
                   placeholder="AIzaSy... hoặc dán key tại đây"
                   value={customKey}
-                  onChange={(e) => setCustomKey(e.target.value)}
+                  onChange={(e) => { setCustomKey(e.target.value); setError(''); }}
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-mono"
                 />
               </div>
@@ -132,6 +120,7 @@ export const LoginModal: React.FC = () => {
               </div>
             </div>
 
+            {error && <p role="alert" className="text-xs text-rose-700">{error}</p>}
             <button
               type="submit"
               className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-md shadow-indigo-600/20 transition-all"

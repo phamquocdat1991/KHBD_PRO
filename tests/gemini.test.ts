@@ -7,6 +7,31 @@ function respond(result = aiResult(), finishReason = 'STOP') {
   return new Response(JSON.stringify({ candidates: [{ finishReason, content: { role: 'model', parts: [{ text: JSON.stringify(result) }] } }] }), {status: 200});
 }
 afterEach(() => vi.unstubAllGlobals());
+it('requests a schema with four complete activities and required selected appendices', async () => {
+  let request: any;
+  vi.stubGlobal('fetch', vi.fn(async (_url, init) => { request=JSON.parse(init.body); return respond(); }));
+  await GeminiService.generateLessonPlan(params);
+  const schema = request.generationConfig.responseJsonSchema;
+  expect(schema).toBeDefined();
+  const success = schema.anyOf.find((branch:any) => branch.properties.activities);
+  expect(success.properties.activities).toMatchObject({type:'array',minItems:4,maxItems:4});
+  expect(success.properties.activities.items.required).toContain('step4Student');
+  expect(success.required).toEqual(expect.arrayContaining(['mindmap','slides','worksheetsAppendix','digitalCompetencies']));
+  expect(success.properties.worksheetsAppendix.minItems).toBe(1);
+  expect(schema.anyOf.some((branch:any) => branch.required?.includes('error'))).toBe(true);
+});
+it('identifies missing selected competencies in an incomplete AI response', async () => {
+  vi.stubGlobal('fetch',vi.fn(async()=>respond({...aiResult(),digitalCompetencies:[]})));
+  await expect(GeminiService.generateLessonPlan(params)).rejects.toThrow(/năng lực số/i);
+});
+it('handles null activities as an invalid answer with a useful error', async () => {
+  vi.stubGlobal('fetch',vi.fn(async()=>respond({...aiResult(),activities:[null,null,null,null]} as any)));
+  await expect(GeminiService.generateLessonPlan(params)).rejects.toThrow(/hoạt động/i);
+});
+it('preserves source-reading refusals instead of requiring a fabricated lesson', async () => {
+  vi.stubGlobal('fetch',vi.fn(async()=>respond({error:'Không đọc được source.pdf'} as any)));
+  await expect(GeminiService.generateLessonPlan(params)).rejects.toThrow(/Không đọc được source.pdf/);
+});
 describe('Gemini source grounding and failure handling', () => {
   it('refuses generation without a key instead of saving a fabricated completed lesson', async () => {
     await expect(GeminiService.generateLessonPlan({...params, apiKey: ''})).rejects.toThrow(/API Key/i);
