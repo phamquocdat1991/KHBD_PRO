@@ -9,9 +9,9 @@ export function aiResult() {
   return {
     knowledgeObjectives: ['Giải thích SOURCE-58319 từ ba khay hạt đậu.'],
     generalCompetencies: s.objectives.generalCompetencies, specificCompetencies: s.objectives.specificCompetencies,
-    digitalCompetencies: ['Đọc bảng số liệu.'], aiCompetencies: ['Kiểm tra câu trả lời AI.'], stemCompetencies: [],
+    digitalCompetencies: ['[1.2] Đánh giá dữ liệu — Đọc bảng số liệu — Hoạt động 2 — Phiếu so sánh.'], aiCompetencies: ['[6.A1.3] Kiểm tra lại kết quả AI — Hoạt động 2 — Bảng đối chiếu với nguồn.'], stemCompetencies: [],
     qualities: s.objectives.qualities, equipmentTeacher: s.teachingEquipment.teacher, equipmentStudent: s.teachingEquipment.student,
-    activities: s.activities.map(a => ({ ...a, ...a.implementation })),
+    activities: s.activities.map((a,i) => ({ ...a, ...a.implementation, durationMinutes:[10,40,25,15][i], product:a.product+' [1.2] [6.A1.3]' })),
     worksheetsAppendix: ['So sánh khay A, B, C — SOURCE-58319.'], mindmap: s.mindmap, slides: s.slides,
   };
 }

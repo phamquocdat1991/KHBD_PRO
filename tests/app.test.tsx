@@ -57,7 +57,7 @@ it('generates from uploaded DOCX, PDF and entered text through the real form/con
   let request:any;
   vi.stubGlobal('fetch',vi.fn(async(_url,init)=>{
     request=JSON.parse(init.body);
-    return new Response(JSON.stringify({candidates:[{finishReason:'STOP',content:{role:'model',parts:[{text:JSON.stringify(aiResult())}]}}]}));
+    return new Response(JSON.stringify({candidates:[{finishReason:'STOP',content:{role:'model',parts:[{text:JSON.stringify({...aiResult(),aiCompetencies:['[11.A1.1] Thực hiện quy trình sử dụng AI an toàn.'],activities:aiResult().activities.map(a=>({...a,product:a.product+' [11.A1.1]'}))})}]}}]}));
   }));
   render(<App/>);
   fireEvent.click(screen.getByRole('button',{name:'Soạn Bài Dạy Mới',exact:true}));
@@ -110,4 +110,17 @@ it('preserves entered source and attachments while visiting preview and library'
   fireEvent.click(screen.getByRole('button',{name:'Soạn Bài Dạy Mới',exact:true}));
   expect((screen.getByPlaceholderText(/Dán nội dung trọng tâm/) as HTMLTextAreaElement).value).toBe('KEEP-DRAFT-456');
   expect(screen.getByRole('button',{name:'Bỏ tệp keep.txt'})).not.toBeNull();
+});
+it('offers only the fixed Ket noi tri thuc textbook for new lessons',()=>{
+  render(<App/>);
+  fireEvent.click(screen.getByRole('button',{name:'Soạn Bài Dạy Mới',exact:true}));
+  expect(screen.queryByRole('button',{name:'Cánh Diều',exact:true})).toBeNull();
+  expect(screen.queryByRole('button',{name:'Chân trời sáng tạo',exact:true})).toBeNull();
+  expect(screen.queryByRole('button',{name:'Bộ sách hiện hành khác',exact:true})).toBeNull();
+});
+it('marks both competency sections red on the A4 document',()=>{
+  render(<App/>);
+  for(const text of ['Năng lực số:','Năng lực AI:']){
+    expect(screen.getByText(text,{exact:true}).closest('[data-competency]')?.getAttribute('style')).toContain('color: rgb(255, 0, 0)');
+  }
 });

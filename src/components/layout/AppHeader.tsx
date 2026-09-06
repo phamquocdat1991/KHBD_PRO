@@ -21,7 +21,7 @@ export const AppHeader: React.FC = () => {
                 KHBD AI PRO
               </span>
               <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                v2.0.2
+                v2.0.3
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">

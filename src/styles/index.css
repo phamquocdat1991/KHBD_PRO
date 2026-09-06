@@ -104,3 +104,5 @@
   tr { break-inside: avoid; }
   h2, h3, h4 { break-after: avoid; }
 }
+
+[data-competency] { print-color-adjust: exact; -webkit-print-color-adjust: exact; }

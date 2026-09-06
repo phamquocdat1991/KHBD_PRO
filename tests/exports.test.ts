@@ -27,3 +27,15 @@ it('exports English labels when English is selected',async()=>{
   const zip=await JSZip.loadAsync(await saved.blob!.arrayBuffer());
   expect(await zip.file('word/document.xml')!.async('string')).toContain('I. OBJECTIVES');
 });
+it('keeps digital and AI competency paragraphs red in Word',async()=>{
+  const lesson=structuredClone(SAMPLE_LESSONS[0]);
+  lesson.objectives.digitalCompetencies=['[1.2] NLS-RED-QA'];
+  lesson.objectives.aiCompetencies=['[11.A1.1] AI-RED-QA'];
+  await DocxExportService.exportLessonPlanToDocx(lesson);
+  const zip=await JSZip.loadAsync(await saved.blob!.arrayBuffer());
+  const xml=await zip.file('word/document.xml')!.async('string');
+  for(const marker of ['NLS-RED-QA','AI-RED-QA']){
+    const paragraph=xml.match(/<w:p[ >][\s\S]*?<\/w:p>/g)!.find(p=>p.includes(marker));
+    expect(paragraph).toContain('w:color w:val="FF0000"');
+  }
+});

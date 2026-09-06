@@ -1,3 +1,4 @@
+import { competencySegments } from '../../services/competencyService';
 import React, { useState } from 'react';
 import { useLesson } from '../../context/LessonContext';
 import { useAuth } from '../../context/AuthContext';
@@ -29,7 +30,7 @@ export const A4DocumentPreview: React.FC = () => {
     role={isEditing?'textbox':undefined} aria-label={isEditing?path.join('.'):undefined}
     onBlur={e=>{const text=e.currentTarget.innerText??e.currentTarget.textContent??''; if(text.trim())save(path,text);else e.currentTarget.textContent=value;}}
     onPaste={e=>{if(!isEditing)return; e.preventDefault(); const text=e.clipboardData.getData('text/plain'); const selection=window.getSelection(); if(selection?.rangeCount){const range=selection.getRangeAt(0);range.deleteContents();const node=document.createTextNode(text);range.insertNode(node);range.setStartAfter(node);range.collapse(true);selection.removeAllRanges();selection.addRange(range);}}}
-    className={`whitespace-pre-line ${isEditing?'outline-none rounded bg-sky-50 focus:ring-2 focus:ring-sky-400':''}`}>{value}</span>;
+    className={`whitespace-pre-line ${isEditing?'outline-none rounded bg-sky-50 focus:ring-2 focus:ring-sky-400':''}`}>{competencySegments(value).map((part,i)=>part.isCode?<span key={i} style={{color:'#FF0000'}}>{part.text}</span>:part.text)}</span>;
   const list=(values:string[]|undefined,path:string[]) => <ul className="list-disc pl-6 space-y-1">{values?.map((v,i)=><li key={i}>{editable(v,[...path,i])}</li>)}</ul>;
   const steps=(index:number) => labels.map((pair,i)=>{
     const a=lesson.activities[index];
@@ -61,8 +62,8 @@ export const A4DocumentPreview: React.FC = () => {
           <h3 className="font-bold">{tr('2. Về năng lực:','2. Competencies:')}</h3>
           <strong>{tr('a) Năng lực chung:','a) General competencies:')}</strong>{list(lesson.objectives.generalCompetencies,['objectives','generalCompetencies'])}
           <strong>{tr('b) Năng lực đặc thù:','b) Subject competencies:')}</strong>{list(lesson.objectives.specificCompetencies,['objectives','specificCompetencies'])}
-          {lesson.options.nls&&<><strong>{tr('Năng lực số:','Digital competencies:')}</strong>{list(lesson.objectives.digitalCompetencies,['objectives','digitalCompetencies'])}</>}
-          {lesson.options.aiEducation&&<><strong>{tr('Năng lực AI:','AI competencies:')}</strong>{list(lesson.objectives.aiCompetencies,['objectives','aiCompetencies'])}</>}
+          {lesson.options.nls&&<div data-competency="digital" style={{color:'#FF0000'}}><strong>{tr('Năng lực số:','Digital competencies:')}</strong>{list(lesson.objectives.digitalCompetencies,['objectives','digitalCompetencies'])}</div>}
+          {lesson.options.aiEducation&&<div data-competency="ai" style={{color:'#FF0000'}}><strong>{tr('Năng lực AI:','AI competencies:')}</strong>{list(lesson.objectives.aiCompetencies,['objectives','aiCompetencies'])}</div>}
           {lesson.options.stemLesson&&<><strong>{tr('Năng lực STEM:','STEM competencies:')}</strong>{list(lesson.objectives.stemCompetencies,['objectives','stemCompetencies'])}</>}
           <h3 className="font-bold">{tr('3. Về phẩm chất:','3. Qualities:')}</h3>{list(lesson.objectives.qualities,['objectives','qualities'])}
         </section>

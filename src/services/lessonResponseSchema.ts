@@ -3,7 +3,7 @@ import { AdvancedOptions } from '../types';
 // generateContent JSON Schema: https://ai.google.dev/api/generate-content#v1beta.GenerationConfig
 // Keep the error branch so unreadable sources never force a fabricated lesson.
 export function lessonResponseSchema(options: AdvancedOptions) {
-  const text = { type: 'string' };
+  const text = { type: 'string', minLength: 1 };
   const list = (required = true) => ({ type: 'array', items: text, minItems: required ? 1 : 0 });
   const steps = ['step1Teacher', 'step1Student', 'step2Teacher', 'step2Student',
     'step3Teacher', 'step3Student', 'step4Teacher', 'step4Student'];
@@ -18,7 +18,7 @@ export function lessonResponseSchema(options: AdvancedOptions) {
       items: {
         type: 'object',
         properties: {
-          ...Object.fromEntries(activityFields.map(key => [key, text])),
+          ...Object.fromEntries(activityFields.map(key => [key, {...text, description: key.startsWith('step') ? 'Nhiệm vụ chi tiết, ít nhất hai câu cụ thể; câu hỏi, phản hồi, kiến thức và cách đánh giá theo vai trò của bước.' : 'Nội dung chuyên môn cụ thể, không dùng chỗ trống hoặc dàn ý chung.'}])),
           durationMinutes: { type: 'integer', minimum: 1 },
         },
         required: [...activityFields, ...(options.timeline ? ['durationMinutes'] : [])],

@@ -89,3 +89,43 @@ it('answers a Copilot question using the selected lesson and surfaces errors',as
   expect(result).toBe('Câu trả lời kiểm thử từ nguồn.');
   await expect(GeminiService.answerLessonQuestion(SAMPLE_LESSONS[0],'Hỏi nguồn','','gemini-3.8-flash')).rejects.toThrow(/API Key/);
 });
+
+it('rejects uncoded competencies instead of saving an unverifiable mapping',async()=>{
+  vi.stubGlobal('fetch',vi.fn(async()=>respond({...aiResult(),digitalCompetencies:['Biết sử dụng máy tính.']})));
+  await expect(GeminiService.generateLessonPlan(params)).rejects.toThrow(/mã năng lực số/i);
+});
+it('rejects a made-up AI code or a code from another grade',async()=>{
+  for(const code of ['6.Z9.999','8.A1.2']){
+    vi.stubGlobal('fetch',vi.fn(async()=>respond({...aiResult(),aiCompetencies:[`[${code}] Kiểm chứng kết quả.`]})));
+    await expect(GeminiService.generateLessonPlan(params)).rejects.toThrow(/mã.*AI/i);
+  }
+});
+it('rejects very sparse activities even when all JSON fields exist',async()=>{
+  const result=aiResult();
+  result.activities=result.activities.map(a=>({...a,content:'Học kiến thức mới.',product:'Bài làm.',...Object.fromEntries(Object.keys(a.implementation).map(k=>[k,'Thực hiện nhiệm vụ.']))}));
+  vi.stubGlobal('fetch',vi.fn(async()=>respond(result)));
+  await expect(GeminiService.generateLessonPlan(params)).rejects.toThrow(/chi tiết/i);
+});
+it('does not silently rewrite minutes while keeping contradictory lesson instructions',async()=>{
+  const result=aiResult();result.activities=result.activities.map(a=>({...a,durationMinutes:2}));
+  vi.stubGlobal('fetch',vi.fn(async()=>respond(result)));
+  await expect(GeminiService.generateLessonPlan(params)).rejects.toThrow(/thời lượng/i);
+});
+it('repairs a sparse first draft once, preserving sources and returning the complete lesson',async()=>{
+  const sparse=aiResult();sparse.activities=sparse.activities.map(a=>({...a,step1Teacher:'...'}));
+  const fetchMock=vi.fn().mockResolvedValueOnce(respond(sparse)).mockResolvedValueOnce(respond());
+  vi.stubGlobal('fetch',fetchMock);
+  const lesson=await GeminiService.generateLessonPlan(params);
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  const repair=JSON.parse(fetchMock.mock.calls[1][1].body);
+  expect(JSON.stringify(repair.contents)).toContain('SOURCE-58319');
+  expect(lesson.activities).toHaveLength(4);
+  expect(lesson.textbook).toBe('Kết nối tri thức với cuộc sống');
+});
+it('does not require competencies or minutes when the teacher disabled them',async()=>{
+  const result={...aiResult(),digitalCompetencies:[],aiCompetencies:[],activities:aiResult().activities.map(a=>({...a,durationMinutes:undefined}))};
+  vi.stubGlobal('fetch',vi.fn(async()=>respond(result)));
+  const lesson=await GeminiService.generateLessonPlan({...params,options:{...params.options,nls:false,aiEducation:false,timeline:false}});
+  expect(lesson.objectives.digitalCompetencies).toBeUndefined();
+  expect(lesson.activities[0].durationMinutes).toBeUndefined();
+});

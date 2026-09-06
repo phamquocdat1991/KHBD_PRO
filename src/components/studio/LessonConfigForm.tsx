@@ -1,8 +1,9 @@
+import { LESSON_TEXTBOOK } from '../../data/lessonDefaults';
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { prepareSourceDocument, SourceDocument, MAX_SOURCE_BYTES, SOURCE_ACCEPT } from '../../services/sourceDocumentService';
 import { useLesson } from '../../context/LessonContext';
-import { Subject, GradeLevel, TextbookEdition, TableFormat, AdvancedOptions, LessonLanguage } from '../../types';
+import { Subject, GradeLevel, TableFormat, AdvancedOptions, LessonLanguage } from '../../types';
 import { Sparkles, UploadCloud, FileText, Check, Settings2, Sliders, Loader2, Globe, Cpu, Lightbulb, Compass } from 'lucide-react';
 
 export const LessonConfigForm: React.FC = () => {
@@ -12,7 +13,7 @@ export const LessonConfigForm: React.FC = () => {
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState<Subject>('Toán');
   const [grade, setGrade] = useState<GradeLevel>('Lớp 11');
-  const [textbook, setTextbook] = useState<TextbookEdition>('Cánh Diều');
+  const textbook = LESSON_TEXTBOOK;
   const [periodsCount, setPeriodsCount] = useState(2);
   const [tableFormat, setTableFormat] = useState<TableFormat>('2col');
   const [language, setLanguage] = useState<LessonLanguage>('vi');
@@ -50,12 +51,6 @@ export const LessonConfigForm: React.FC = () => {
     'Lớp 10', 'Lớp 11', 'Lớp 12'
   ];
 
-  const textbooks: TextbookEdition[] = [
-    'Kết nối tri thức với cuộc sống',
-    'Cánh Diều',
-    'Chân trời sáng tạo',
-    'Bộ sách hiện hành khác'
-  ];
 
   const teachingMethodsList = [
     'Phương pháp dạy học tích cực',
@@ -227,25 +222,9 @@ export const LessonConfigForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Bộ sách chọn nhanh */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-2">Bộ Sách Giáo Khoa</label>
-          <div className="flex flex-wrap gap-2">
-            {textbooks.map((tb) => (
-              <button
-                type="button"
-                key={tb}
-                onClick={() => setTextbook(tb)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                  textbook === tb
-                    ? 'bg-sky-600 text-white shadow-sm font-bold'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
-                }`}
-              >
-                {tb}
-              </button>
-            ))}
-          </div>
+          <span className="block text-xs font-bold text-slate-700 mb-2">Bộ Sách Giáo Khoa</span>
+          <p className="text-sm font-semibold text-sky-800">{LESSON_TEXTBOOK}</p>
         </div>
 
         {/* Mẫu bảng KHBD */}

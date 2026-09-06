@@ -1,3 +1,4 @@
+import { competencySegments } from './competencyService';
 import {Document,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,BorderStyle,Packer} from 'docx';
 import {saveAs} from 'file-saver';
 import {LessonPlan,TeacherProfile} from '../types';
@@ -7,8 +8,8 @@ export class DocxExportService {
   static async exportLessonPlanToDocx(lesson:LessonPlan,teacher?:TeacherProfile|null):Promise<void> {
     const en=lesson.language==='en';
     const tr=(vi:string,english:string)=>en?english:vi;
-    const p=(text:string,bold=false,center=false)=>new Paragraph({alignment:center?AlignmentType.CENTER:AlignmentType.LEFT,spacing:{after:100},children:text.split('\n').map((line,i)=>new TextRun({text:line,bold,font:'Times New Roman',size:24,...(i?{break:1}:{})}))});
-    const list=(values:string[]|undefined)=>(values||[]).map(v=>p(`• ${v}`));
+    const p=(text:string,bold=false,center=false,color='000000')=>new Paragraph({alignment:center?AlignmentType.CENTER:AlignmentType.LEFT,spacing:{after:100},children:text.split('\n').flatMap((line,i)=>competencySegments(line || ' ').map((part,j)=>new TextRun({text:part.text,bold,color:part.isCode?'FF0000':color,font:'Times New Roman',size:24,...(i&&j===0?{break:1}:{})})))});
+    const list=(values:string[]|undefined,color='000000')=>(values||[]).map(v=>p(`• ${v}`,false,false,color));
     const border={style:BorderStyle.SINGLE,size:4,color:'000000'};
     const cell=(texts:string[],bold=false)=>new TableCell({borders:{top:border,bottom:border,left:border,right:border},children:texts.map(t=>p(t,bold)),...(bold?{shading:{fill:'F3F4F6'}}:{})});
     const children:(Paragraph|Table)[]=[
@@ -20,8 +21,8 @@ export class DocxExportService {
       p(tr('2. Về năng lực:','2. Competencies:'),true),p(tr('Năng lực chung:','General competencies:'),true),...list(lesson.objectives.generalCompetencies),
       p(tr('Năng lực đặc thù:','Subject competencies:'),true),...list(lesson.objectives.specificCompetencies),
     ];
-    if(lesson.options.nls)children.push(p(tr('Năng lực số:','Digital competencies:'),true),...list(lesson.objectives.digitalCompetencies));
-    if(lesson.options.aiEducation)children.push(p(tr('Năng lực AI:','AI competencies:'),true),...list(lesson.objectives.aiCompetencies));
+    if(lesson.options.nls)children.push(p(tr('Năng lực số:','Digital competencies:'),true,false,'FF0000'),...list(lesson.objectives.digitalCompetencies,'FF0000'));
+    if(lesson.options.aiEducation)children.push(p(tr('Năng lực AI:','AI competencies:'),true,false,'FF0000'),...list(lesson.objectives.aiCompetencies,'FF0000'));
     if(lesson.options.stemLesson)children.push(p(tr('Năng lực STEM:','STEM competencies:'),true),...list(lesson.objectives.stemCompetencies));
     children.push(p(tr('3. Về phẩm chất:','3. Qualities:'),true),...list(lesson.objectives.qualities),
       p(tr('II. THIẾT BỊ DẠY HỌC VÀ HỌC LIỆU','II. EQUIPMENT AND MATERIALS'),true),p(tr('1. Giáo viên:','1. Teacher:'),true),...list(lesson.teachingEquipment.teacher),p(tr('2. Học sinh:','2. Students:'),true),...list(lesson.teachingEquipment.student),
