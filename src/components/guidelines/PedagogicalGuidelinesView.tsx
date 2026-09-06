@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, ShieldCheck, Cpu, Award, FileCheck, CheckCircle2, Phone, Mail, User } from 'lucide-react';
+import { BookOpen, ShieldCheck, Cpu, Award, FileCheck, CheckCircle2 } from 'lucide-react';
 
 export const PedagogicalGuidelinesView: React.FC = () => {
   return (
@@ -35,7 +35,7 @@ export const PedagogicalGuidelinesView: React.FC = () => {
               Chuẩn GDPT 2018
             </span>
             <span className="px-3 py-1.5 rounded-xl bg-white text-xs font-semibold text-emerald-800 border border-emerald-200 shadow-xs">
-              Google AI SDK v5.0
+              Google Gemini API
             </span>
           </div>
         </div>
@@ -105,14 +105,14 @@ export const PedagogicalGuidelinesView: React.FC = () => {
               <span>Bảo Mật API Key</span>
             </div>
             <p className="text-slate-500">
-              Key cá nhân chỉ lưu trong phiên trình duyệt (localStorage), không lưu trữ trái phép trên máy chủ trung gian.
+              Key cá nhân chỉ lưu trên trình duyệt hiện tại (localStorage) và được gửi trực tiếp tới Google Gemini API khi thầy/cô yêu cầu tạo nội dung.
             </p>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
             <div className="font-bold text-slate-900 flex items-center gap-1.5 text-sky-700">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Google AI SDK v5.0</span>
+              <span>Google Gemini API</span>
             </div>
             <p className="text-slate-500">
               Tích hợp chuẩn thế hệ model mới (Gemini 3.8 Flash, 3.6 Flash) tối ưu tư duy sư phạm và phân bổ token.
