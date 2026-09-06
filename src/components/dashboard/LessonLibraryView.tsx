@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLesson } from '../../context/LessonContext';
 import { useAuth } from '../../context/AuthContext';
 import { DocxExportService } from '../../services/docxExportService';
@@ -7,6 +7,7 @@ import { LessonPlan } from '../../types';
 
 export const LessonLibraryView: React.FC = () => {
   const { currentUser } = useAuth();
+  const [exportError, setExportError] = useState('');
   const {
     library,
     startNewLesson,
@@ -52,9 +53,14 @@ export const LessonLibraryView: React.FC = () => {
     setActiveView('studio');
   };
 
-  const handleExportDocx = (e: React.MouseEvent, lesson: LessonPlan) => {
+  const handleExportDocx = async (e: React.MouseEvent, lesson: LessonPlan) => {
     e.stopPropagation();
-    DocxExportService.exportLessonPlanToDocx(lesson, currentUser);
+    setExportError('');
+    try {
+      await DocxExportService.exportLessonPlanToDocx(lesson, currentUser);
+    } catch {
+      setExportError('Không xuất được Word. Bài dạy vẫn được giữ trong thư viện; hãy thử lại.');
+    }
   };
 
   const handleShare = (e: React.MouseEvent, lesson: LessonPlan) => {
@@ -144,6 +150,7 @@ export const LessonLibraryView: React.FC = () => {
         </div>
       </div>
 
+      {exportError && <p role="alert" className="mb-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{exportError}</p>}
       {/* Grid of Lesson Cards */}
       {filteredLessons.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

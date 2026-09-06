@@ -1,5 +1,6 @@
 import { LessonPlan, GeminiModelId, Subject, GradeLevel, TextbookEdition, TableFormat, AdvancedOptions, LessonLanguage, MindmapNode } from '../types';
 import { SourceDocument, sourceText, MAX_SOURCE_BYTES } from './sourceDocumentService';
+import { lessonResponseSchema } from './lessonResponseSchema';
 
 export interface GenerateParams {
   title: string; subject: Subject; grade: GradeLevel; textbook: TextbookEdition;
@@ -19,14 +20,24 @@ function validateResult(ai: any, params: GenerateParams) {
   if (params.options.stemLesson) required.push('stemCompetencies');
   if (params.options.worksheets) required.push('worksheetsAppendix');
   const validActivities = Array.isArray(ai?.activities) && ai.activities.length === 4 && ai.activities.every((a:any)=>
-    ['title','objective','content','product',...stepKeys].every(k=>nonempty(a[k])) &&
+    ['title','objective','content','product',...stepKeys].every(k=>nonempty(a?.[k])) &&
     (!params.options.timeline || (Number.isFinite(a.durationMinutes) && a.durationMinutes > 0)));
   function validMindmap(node:any,depth=0):boolean {
     return depth < 10 && nonempty(node?.label) && (node.children === undefined || (Array.isArray(node.children) && node.children.every((c:any)=>validMindmap(c,depth+1))));
   }
-  if (!ai || !required.every(k=>strings(ai[k])) || !validActivities || !validMindmap(ai.mindmap) ||
-      !Array.isArray(ai.slides) || !ai.slides.length || !ai.slides.every((s:any)=>nonempty(s.title)&&strings(s.bullets))) {
-    throw new Error('AI trả về bài soạn thiếu hoặc sai cấu trúc. Chưa lưu bài; hãy thử lại hoặc giảm lượng tài liệu.');
+  const labels: Record<string,string> = {
+    knowledgeObjectives:'mục tiêu kiến thức', generalCompetencies:'năng lực chung',
+    specificCompetencies:'năng lực đặc thù', qualities:'phẩm chất',
+    equipmentTeacher:'thiết bị giáo viên', equipmentStudent:'thiết bị học sinh',
+    digitalCompetencies:'năng lực số', aiCompetencies:'năng lực AI',
+    stemCompetencies:'năng lực STEM', worksheetsAppendix:'phiếu học tập',
+  };
+  const issues = required.filter(k=>!strings(ai?.[k])).map(k=>labels[k]);
+  if (!validActivities) issues.push('4 hoạt động với đủ nhiệm vụ GV/HS và thời lượng đã chọn');
+  if (!validMindmap(ai?.mindmap)) issues.push('sơ đồ tư duy');
+  if (!Array.isArray(ai?.slides) || !ai.slides.length || !ai.slides.every((s:any)=>nonempty(s?.title)&&strings(s?.bullets))) issues.push('kịch bản slide');
+  if (issues.length) {
+    throw new Error(`AI trả về bài soạn thiếu hoặc sai cấu trúc: ${issues.join('; ')}. Chưa lưu bài; hãy thử lại hoặc giảm lượng tài liệu.`);
   }
 }
 
@@ -101,7 +112,7 @@ ${JSON.stringify(sample)}`;
     onProgress?.(`Đang gửi nội dung và ${docs.length} tài liệu nguồn tới Gemini...`);
     const raw = await requestGemini(params.apiKey,params.modelId || 'gemini-3.8-flash',{
       systemInstruction:{parts:[{text:instruction}]}, contents:[{role:'user',parts}],
-      generationConfig:{maxOutputTokens:32768,responseMimeType:'application/json'},
+      generationConfig:{maxOutputTokens:32768,responseMimeType:'application/json',responseJsonSchema:lessonResponseSchema(params.options)},
     });
     onProgress?.('Đang kiểm tra nội dung và cấu trúc bài soạn...');
     let ai:any;
