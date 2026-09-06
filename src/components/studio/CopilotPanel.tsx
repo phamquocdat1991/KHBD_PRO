@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { GeminiService } from '../../services/geminiService';
 import { useLesson } from '../../context/LessonContext';
 import { useAuth } from '../../context/AuthContext';
 import { DocxExportService } from '../../services/docxExportService';
@@ -7,8 +8,10 @@ import { Bot, GitBranch, Presentation, Send, FileDown } from 'lucide-react';
 import { MindmapNode } from '../../types';
 
 export const CopilotPanel: React.FC = () => {
-  const { currentUser } = useAuth();
-  const { activeLesson } = useLesson();
+  const { currentUser, geminiApiKey } = useAuth();
+  const { activeLesson, selectedModel } = useLesson();
+  const [isSending, setIsSending] = useState(false);
+  const [chatError, setChatError] = useState('');
 
   const [activeTab, setActiveTab] = useState<'mindmap' | 'slides' | 'chat'>('mindmap');
   const [chatInput, setChatInput] = useState('');
@@ -19,40 +22,29 @@ export const CopilotPanel: React.FC = () => {
     },
   ]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
-
-    const userText = chatInput;
-    setMessages((prev) => [...prev, { role: 'user', text: userText }]);
-    setChatInput('');
-
-    setTimeout(() => {
-      let reply = '';
-      const lower = userText.toLowerCase();
-      if (lower.includes('trắc nghiệm') || lower.includes('câu hỏi')) {
-        reply = `📝 Gợi ý 3 câu hỏi trắc nghiệm phân hóa cho "${activeLesson?.title || 'bài học'}":\n\n1. [Nhận biết] Khái niệm cốt lõi của bài học là gì?\nA. Đáp án đúng\nB. Đáp án nhiễu 1\nC. Đáp án nhiễu 2\nD. Đáp án nhiễu 3\n👉 Đáp án: A\n\n2. [Thông hiểu] Điều kiện nào sau đây quyết định tính chất bài toán?\n👉 Giải thích chi tiết theo SGK hiện hành.`;
-      } else if (lower.includes('khởi động') || lower.includes('trò chơi')) {
-        reply = `🎯 Gợi ý Trò chơi Khởi động: "Mảnh Ghép Bí Mật" (5 phút)\n- GV chuẩn bị 4 mảnh ghép câu hỏi ngắn.\n- HS trả lời đúng từng mảnh ghép để lật mở bức tranh chủ đề của bài học "${activeLesson?.title}".\n- Tác dụng: Kích thích tò mò và gắn kết ngay từ đầu giờ.`;
-      } else if (lower.includes('học sinh yếu') || lower.includes('hạ độ khó')) {
-        reply = `💡 Biện pháp hỗ trợ học sinh trung bình/yếu:\n- Cung cấp Phiếu gợi ý công thức mẫu (step-by-step).\n- Phân công bạn học khá ngồi cạnh hỗ trợ (học tập đôi bạn cùng tiến).\n- Chia nhỏ các yêu cầu tính toán thành từng bước nhỏ.`;
-      } else {
-        reply = `Đã ghi nhận yêu cầu của Thầy/Cô về "${userText}". Tôi đã bổ sung các gợi ý sư phạm phù hợp với đối tượng học sinh và chương trình GDPT 2018.`;
-      }
-
-      setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
-    }, 500);
+    if (!chatInput.trim() || isSending) return;
+    if (!activeLesson) { setChatError('Hãy mở một bài dạy trước khi hỏi AI.'); return; }
+    const userText=chatInput.trim();
+    setChatError(''); setIsSending(true);
+    try {
+      const reply=await GeminiService.answerLessonQuestion(activeLesson,userText,geminiApiKey,selectedModel,messages.filter((_,i)=>i>0));
+      setMessages(prev=>[...prev,{role:'user',text:userText},{role:'assistant',text:reply}]);
+      setChatInput('');
+    } catch(error) { setChatError(error instanceof Error?error.message:'Không nhận được câu trả lời. Hãy thử lại.'); }
+    finally { setIsSending(false); }
   };
 
-  const handleExportDocx = () => {
+  const handleExportDocx = async () => {
     if (activeLesson) {
-      DocxExportService.exportLessonPlanToDocx(activeLesson, currentUser);
+      try { await DocxExportService.exportLessonPlanToDocx(activeLesson, currentUser); } catch { setChatError('Không xuất được Word. Vui lòng thử lại.'); }
     }
   };
 
-  const handleExportPptx = () => {
+  const handleExportPptx = async () => {
     if (activeLesson) {
-      PptxExportService.exportSlideDeck(activeLesson);
+      try { await PptxExportService.exportSlideDeck(activeLesson); } catch(error) { setChatError(error instanceof Error ? error.message : 'Không xuất được PowerPoint.'); }
     }
   };
 
@@ -84,7 +76,7 @@ export const CopilotPanel: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-white rounded-3xl border border-slate-200/80 p-5 shadow-sm overflow-hidden">
       {/* Header Tabs */}
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+      <div className="flex flex-wrap gap-3 items-center justify-between pb-3 mb-3 border-b border-slate-100">
         <div className="flex items-center gap-2">
           <Bot className="w-5 h-5 text-sky-600" />
           <span className="text-sm font-bold text-slate-900">AI Pedagogical Copilot</span>
@@ -125,6 +117,7 @@ export const CopilotPanel: React.FC = () => {
         </div>
       </div>
 
+      {chatError && <p role="alert" className="mb-3 text-xs text-rose-700">{chatError}</p>}
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto pr-1 space-y-4">
         {activeTab === 'mindmap' && (
@@ -206,6 +199,7 @@ export const CopilotPanel: React.FC = () => {
             <form onSubmit={handleSendMessage} className="mt-3 flex gap-2">
               <input
                 type="text"
+                disabled={isSending}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Hỏi AI về bài dạy... (Enter để gửi)"
@@ -213,6 +207,8 @@ export const CopilotPanel: React.FC = () => {
               />
               <button
                 type="submit"
+                aria-label="Gửi câu hỏi AI"
+                disabled={isSending || !chatInput.trim()}
                 className="p-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white shadow-xs transition-colors"
               >
                 <Send className="w-4 h-4" />
@@ -222,6 +218,7 @@ export const CopilotPanel: React.FC = () => {
             <div className="flex flex-wrap gap-1.5 mt-2">
               <button
                 type="button"
+                disabled={isSending}
                 onClick={() => setChatInput('Tạo câu hỏi trắc nghiệm phân hóa')}
                 className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-[10px] text-sky-800 border border-slate-200"
               >
@@ -229,6 +226,7 @@ export const CopilotPanel: React.FC = () => {
               </button>
               <button
                 type="button"
+                disabled={isSending}
                 onClick={() => setChatInput('Gợi ý trò chơi khởi động hấp dẫn')}
                 className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-[10px] text-sky-800 border border-slate-200"
               >
@@ -236,6 +234,7 @@ export const CopilotPanel: React.FC = () => {
               </button>
               <button
                 type="button"
+                disabled={isSending}
                 onClick={() => setChatInput('Hạ độ khó cho học sinh yếu')}
                 className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-[10px] text-sky-800 border border-slate-200"
               >

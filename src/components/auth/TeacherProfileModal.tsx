@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { X, User, School, BookOpen, MapPin, Key, LogOut, Check, Award } from 'lucide-react';
 
@@ -12,6 +12,13 @@ export const TeacherProfileModal: React.FC = () => {
   const [apiKey, setApiKey] = useState(geminiApiKey);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
+  useEffect(() => {
+    if (isProfileModalOpen) {
+      setName(currentUser?.name || ''); setSchoolName(currentUser?.schoolName || '');
+      setDepartment(currentUser?.department || ''); setProvince(currentUser?.province || '');
+      setApiKey(geminiApiKey); setSavedSuccess(false);
+    }
+  }, [isProfileModalOpen, currentUser, geminiApiKey]);
   if (!isProfileModalOpen) return null;
 
   const handleSave = (e: React.FormEvent) => {
@@ -41,6 +48,7 @@ export const TeacherProfileModal: React.FC = () => {
       <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-2xl animate-slide-up">
         {/* Close Button */}
         <button
+          aria-label="Đóng hồ sơ giáo viên"
           onClick={closeProfileModal}
           className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors"
         >
@@ -57,7 +65,7 @@ export const TeacherProfileModal: React.FC = () => {
             <h2 className="text-xl font-bold text-slate-900">{currentUser?.name || 'Giáo viên'}</h2>
             <p className="text-xs text-sky-700 font-mono">{currentUser?.email}</p>
             <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
-              {currentUser?.authProvider === 'google' ? 'Đã liên kết Google' : currentUser?.authProvider === 'byok_guest' ? 'Khách BYOK' : 'Email Giáo dục'}
+              Hồ sơ trên trình duyệt này
             </span>
           </div>
         </div>
@@ -131,7 +139,7 @@ export const TeacherProfileModal: React.FC = () => {
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Dán key AIzaSy... (Để trống nếu dùng mặc định)"
+                placeholder="Dán Gemini API Key để dùng AI"
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 focus:border-sky-500 focus:bg-white rounded-xl text-sm text-slate-900 font-mono focus:outline-none"
               />
             </div>

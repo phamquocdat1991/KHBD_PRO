@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { lessonPlainText } from '../../services/lessonPresentation';
 import { useLesson } from '../../context/LessonContext';
 import { useAuth } from '../../context/AuthContext';
 import { DocxExportService } from '../../services/docxExportService';
@@ -9,31 +10,36 @@ export const FloatingActionDock: React.FC = () => {
   const { currentUser } = useAuth();
   const { activeLesson } = useLesson();
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
 
   if (!activeLesson) return null;
 
-  const handleExportWord = () => {
-    DocxExportService.exportLessonPlanToDocx(activeLesson, currentUser);
+  const handleExportWord = async () => {
+    setError('');
+    try { await DocxExportService.exportLessonPlanToDocx(activeLesson, currentUser); } catch { setError('Không xuất được Word. Hãy thử lại.'); }
   };
 
-  const handleExportPptx = () => {
-    PptxExportService.exportSlideDeck(activeLesson);
+  const handleExportPptx = async () => {
+    setError('');
+    try { await PptxExportService.exportSlideDeck(activeLesson); } catch(error) { setError(error instanceof Error ? error.message : 'Không xuất được PowerPoint.'); }
   };
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleCopy = () => {
-    const text = `KẾ HOẠCH BÀI DẠY: ${activeLesson.title}\nMôn: ${activeLesson.subject} - Lớp: ${activeLesson.grade}\nBộ sách: ${activeLesson.textbook}\n\nI. MỤC TIÊU:\n${activeLesson.objectives.knowledge.join('\n')}\n\nII. TIẾN TRÌNH DẠY HỌC:\n${activeLesson.activities.map(a => `${a.title}\n- Mục tiêu: ${a.objective}\n- Nội dung: ${a.content}`).join('\n\n')}`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+  const handleCopy = async () => {
+    setError('');
+    try {
+      await navigator.clipboard.writeText(lessonPlainText(activeLesson));
+      setCopied(true); setTimeout(() => setCopied(false), 1500);
+    } catch { setError('Trình duyệt không cho phép sao chép. Thầy/cô có thể chọn nội dung và sao chép thủ công.'); }
   };
 
   return (
-    <div className="sticky top-20 z-30 flex items-center justify-center my-4 no-print animate-fade-in">
-      <div className="flex items-center gap-2 p-2 rounded-2xl bg-white/95 border border-slate-200 shadow-xl backdrop-blur-xl">
+    <div className="sticky top-20 z-30 flex flex-col items-center justify-center my-4 no-print animate-fade-in">
+      {error && <p role="alert" className="text-xs text-rose-700 p-2">{error}</p>}
+      <div className="flex flex-wrap justify-center items-center gap-2 p-2 rounded-2xl bg-white/95 border border-slate-200 shadow-xl backdrop-blur-xl">
         <button
           onClick={handleExportWord}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-sm transition-all hover:scale-105 active:scale-95"

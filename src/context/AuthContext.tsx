@@ -20,18 +20,6 @@ interface AuthContextType {
   setGeminiApiKey: (key: string) => void;
 }
 
-const DEFAULT_TEACHER: TeacherProfile = {
-  id: 'teacher-default',
-  name: 'Thầy Nguyễn Nam',
-  email: 'nguyennam@hanoi-amsterdam.edu.vn',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  schoolName: 'THPT Chuyên Hà Nội - Amsterdam',
-  department: 'Tổ Toán - Tin học',
-  province: 'Hà Nội',
-  role: 'teacher',
-  authProvider: 'google',
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_USER_KEY = 'khbd_current_user_v2';
@@ -41,69 +29,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<TeacherProfile | null>(() => {
     try {
       const saved = localStorage.getItem(AUTH_USER_KEY);
-      return saved ? JSON.parse(saved) : DEFAULT_TEACHER;
+      if (!saved) return null;
+      const parsed = JSON.parse(saved) as TeacherProfile;
+      // v2.0 shipped a hard-coded teacher as if it were an authenticated user.
+      // Remove only that exact demo identity; keep profiles teachers created themselves.
+      if (parsed.id === 'teacher-default') {
+        localStorage.removeItem(AUTH_USER_KEY);
+        return null;
+      }
+      return parsed;
     } catch {
-      return DEFAULT_TEACHER;
+      return null;
     }
   });
 
   const [geminiApiKey, setGeminiApiKeyState] = useState<string>(() => {
-    return localStorage.getItem(API_KEY_STORAGE) || '';
+    try { return localStorage.getItem(API_KEY_STORAGE) || ''; } catch { return ''; }
   });
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
-    if (currentUser) {
+    try { if (currentUser) {
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(currentUser));
     } else {
       localStorage.removeItem(AUTH_USER_KEY);
     }
+    } catch { /* Profile remains usable in memory if browser storage is unavailable. */ }
   }, [currentUser]);
 
   const setGeminiApiKey = (key: string) => {
+    key = key.trim();
     setGeminiApiKeyState(key);
-    if (key) {
+    try { if (key) {
       localStorage.setItem(API_KEY_STORAGE, key);
     } else {
       localStorage.removeItem(API_KEY_STORAGE);
-    }
+    } } catch { /* The key remains in memory for this session. */ }
   };
 
   const loginWithGoogle = async () => {
-    // Simulate real Google OAuth popup & user response
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    const googleUser: TeacherProfile = {
-      id: 'google-user-' + Date.now(),
-      name: 'Thầy Trần Minh Hoàng',
-      email: 'hoangtm.edu@gmail.com',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      schoolName: 'THPT Chu Văn An',
-      department: 'Tổ Tự Nhiên',
-      province: 'Hà Nội',
-      role: 'teacher',
-      authProvider: 'google',
-    };
-    setCurrentUser(googleUser);
-    setIsLoginModalOpen(false);
+    throw new Error('Đăng nhập Google chưa được kết nối dịch vụ xác thực. Hãy dùng chế độ BYOK.');
   };
-
-  const loginWithEmail = async (email: string, _pass: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const emailUser: TeacherProfile = {
-      id: 'email-user-' + Date.now(),
-      name: email.split('@')[0].toUpperCase(),
-      email: email,
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-      schoolName: 'Trường THCS & THPT Thực Nghiệm',
-      department: 'Tổ Chuyên Môn',
-      province: 'Hà Nội',
-      role: 'teacher',
-      authProvider: 'email',
-    };
-    setCurrentUser(emailUser);
-    setIsLoginModalOpen(false);
+  const loginWithEmail = async (_email: string, _pass: string) => {
+    throw new Error('Đăng nhập email chưa được kết nối dịch vụ xác thực. Hãy dùng chế độ BYOK.');
   };
 
   const loginAsGuestByok = (apiKey: string) => {
@@ -113,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const guestUser: TeacherProfile = {
       id: 'guest-' + Date.now(),
       name: 'Giáo viên Khách (BYOK)',
-      email: 'guest@khbd-ai-pro.vn',
+      email: '',
       avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
       schoolName: 'Đơn vị giáo dục cá nhân',
       department: 'Giảng dạy tự do',
@@ -127,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setCurrentUser(null);
+    setGeminiApiKey('');
   };
 
   const updateProfile = (updates: Partial<TeacherProfile>) => {

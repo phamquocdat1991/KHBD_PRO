@@ -13,29 +13,25 @@ import { TeacherProfileModal } from './components/auth/TeacherProfileModal';
 import { FileEdit, Eye, Award } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
-  const { activeView, activeLesson } = useLesson();
-  const [studioTab, setStudioTab] = useState<'form' | 'preview'>('preview');
+  const { activeView, activeLesson, studioTab, setStudioTab, generationError } = useLesson();
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 selection:bg-sky-500 selection:text-white">
       {/* Top Header */}
       <AppHeader />
 
+      {generationError && studioTab !== 'form' && <div role="alert" className="no-print bg-rose-50 p-3 text-rose-800 text-sm">{generationError}</div>}
       {/* Main Workspace Body */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left 3-Column Sidebar */}
         <SidebarNav />
 
         {/* Dynamic Center/Right Views */}
-        {activeView === 'library' ? (
-          <LessonLibraryView />
-        ) : activeView === 'guidelines' ? (
-          <PedagogicalGuidelinesView />
-        ) : (
-          /* Studio View: 3-Column Split Workspace */
-          <div className="flex-1 flex flex-col xl:flex-row overflow-hidden">
+        {activeView === 'library' && <LessonLibraryView />}
+        {activeView === 'guidelines' && <PedagogicalGuidelinesView />}
+        <div style={{display: activeView === 'studio' ? undefined : 'none'}} className="flex-1 min-w-0 flex flex-col xl:flex-row overflow-hidden">
             {/* Center Column: Form or A4 Live Document Preview */}
-            <div className="flex-1 flex flex-col overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6">
+            <div className="flex-1 min-w-0 flex flex-col overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6">
               {/* Studio Tab Switcher */}
               <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-200 no-print">
                 <div className="flex items-center gap-2">
@@ -76,23 +72,17 @@ const MainLayout: React.FC = () => {
               </div>
 
               {/* Dynamic Center Content */}
-              {studioTab === 'form' ? (
-                <div className="max-w-3xl mx-auto w-full">
-                  <LessonConfigForm />
-                </div>
-              ) : (
-                <div className="w-full">
-                  <A4DocumentPreview />
-                </div>
-              )}
+              <div style={{display: studioTab === 'form' ? undefined : 'none'}} className="max-w-3xl mx-auto w-full no-print">
+                <LessonConfigForm />
+              </div>
+              {studioTab === 'preview' && <div className="w-full"><A4DocumentPreview key={activeLesson?.id} /></div>}
             </div>
 
             {/* Right Column: AI Pedagogical Copilot & Live Mindmap */}
             <div className="w-full xl:w-[420px] 2xl:w-[460px] p-4 md:p-6 border-t xl:border-t-0 xl:border-l border-slate-200 shrink-0 overflow-y-auto no-print bg-slate-50/50">
-              <CopilotPanel />
+              <CopilotPanel key={activeLesson?.id} />
             </div>
           </div>
-        )}
       </div>
 
       {/* Modals */}

@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { prepareSourceDocument, SourceDocument, MAX_SOURCE_BYTES, SOURCE_ACCEPT } from '../../services/sourceDocumentService';
 import { useLesson } from '../../context/LessonContext';
 import { Subject, GradeLevel, TextbookEdition, TableFormat, AdvancedOptions, LessonLanguage } from '../../types';
 import { Sparkles, UploadCloud, FileText, Check, Settings2, Sliders, Loader2, Globe, Cpu, Lightbulb, Compass } from 'lucide-react';
 
 export const LessonConfigForm: React.FC = () => {
-  const { createLessonPlan, isGenerating, generationProgress } = useLesson();
+  const { createLessonPlan, isGenerating, generationProgress, generationError } = useLesson();
+  const { geminiApiKey, openProfileModal, openLoginModal, currentUser } = useAuth();
 
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState<Subject>('Toán');
@@ -14,9 +17,10 @@ export const LessonConfigForm: React.FC = () => {
   const [tableFormat, setTableFormat] = useState<TableFormat>('2col');
   const [language, setLanguage] = useState<LessonLanguage>('vi');
   const [coreContent, setCoreContent] = useState('');
-  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; size: string }[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<SourceDocument[]>([]);
   const [fileAnalysisStatus, setFileAnalysisStatus] = useState('');
-  const [extractedFileContent, setExtractedFileContent] = useState('');
+  const [fileErrors, setFileErrors] = useState<string[]>([]);
+  const reading = useRef(false);
   const [isReadingFile, setIsReadingFile] = useState(false);
 
   // Advanced Options
@@ -74,73 +78,35 @@ export const LessonConfigForm: React.FC = () => {
     'Âm nhạc & Hoạt náo khởi động năng lượng'
   ];
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
+  const addFiles = async (files: File[]) => {
+    if (!files.length || reading.current || isGenerating) return;
+    reading.current = true;
     setIsReadingFile(true);
-    setFileAnalysisStatus('Đang đọc nội dung tệp...');
-
-    const newFiles = Array.from(files).map((f) => ({
-      name: f.name,
-      size: (f.size / (1024 * 1024)).toFixed(2) + ' MB',
-    }));
-    setUploadedFiles((prev) => [...prev, ...newFiles]);
-
-    // Actually read the file contents using FileReader
-    const readPromises = Array.from(files).map((file) => {
-      return new Promise<string>((resolve) => {
-        const ext = file.name.split('.').pop()?.toLowerCase() || '';
-        const textExts = ['txt', 'md', 'csv', 'text', 'log'];
-
-        if (textExts.includes(ext)) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            const text = ev.target?.result as string;
-            resolve(`\n--- [Nội dung trích xuất từ: ${file.name}] ---\n${text}\n--- [Hết file: ${file.name}] ---\n`);
-          };
-          reader.onerror = () => {
-            resolve(`\n[Không đọc được file: ${file.name}]\n`);
-          };
-          reader.readAsText(file, 'UTF-8');
-        } else if (ext === 'docx' || ext === 'pdf') {
-          resolve(`\n[Lưu ý: File ${file.name} (${ext.toUpperCase()}) không thể đọc trực tiếp trên trình duyệt. Vui lòng copy nội dung từ file và dán vào ô "Nội dung cốt lõi" phía trên để AI soạn bài chính xác hơn.]\n`);
-        } else {
-          resolve(`\n[File ${file.name}: Định dạng chưa hỗ trợ đọc tự động. Hãy dán nội dung vào ô "Nội dung cốt lõi".]\n`);
-        }
-      });
-    });
-
-    Promise.all(readPromises).then((results) => {
-      const allContent = results.join('\n');
-      setExtractedFileContent((prev) => prev + allContent);
-
-      const textFiles = Array.from(files).filter((f) => {
-        const ext = f.name.split('.').pop()?.toLowerCase() || '';
-        return ['txt', 'md', 'csv', 'text', 'log'].includes(ext);
-      });
-      const otherFiles = Array.from(files).filter((f) => {
-        const ext = f.name.split('.').pop()?.toLowerCase() || '';
-        return !['txt', 'md', 'csv', 'text', 'log'].includes(ext);
-      });
-
-      let statusMsg = '';
-      if (textFiles.length > 0) {
-        statusMsg += `✅ Đã đọc nội dung ${textFiles.length} tệp text thành công. `;
+    setFileErrors([]);
+    setFileAnalysisStatus('Đang đọc và chuẩn bị tài liệu...');
+    const accepted: SourceDocument[] = [];
+    const errors: string[] = [];
+    let bytes = uploadedFiles.reduce((sum, f) => sum + f.size, 0);
+    try {
+      for (const file of files) {
+        if (bytes + file.size > MAX_SOURCE_BYTES) { errors.push(`${file.name}: tổng tài liệu vượt quá 40 MB.`); continue; }
+        try { const source = await prepareSourceDocument(file); accepted.push(source); bytes += file.size; }
+        catch (error) { errors.push(error instanceof Error ? error.message : `Không đọc được ${file.name}.`); }
       }
-      if (otherFiles.length > 0) {
-        statusMsg += `⚠️ ${otherFiles.length} tệp (${otherFiles.map(f => f.name).join(', ')}) cần dán nội dung thủ công vào ô "Nội dung cốt lõi".`;
-      }
-      if (!statusMsg) {
-        statusMsg = '✅ Đã xử lý tệp tải lên.';
-      }
-      setFileAnalysisStatus(statusMsg);
-      setIsReadingFile(false);
-    });
+      setUploadedFiles(prev => [...prev, ...accepted]);
+      setFileErrors(errors);
+      setFileAnalysisStatus(accepted.length ? `Đã chuẩn bị ${accepted.length} tệp. PDF/ảnh sẽ được Gemini đọc khi tạo bài; Word/văn bản đã trích xuất chữ.` : 'Chưa có tệp mới nào đọc được.');
+    } finally { reading.current = false; setIsReadingFile(false); }
+  };
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    void addFiles(files);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (reading.current || isGenerating || fileErrors.length) return;
     if (!title.trim()) {
       alert('Vui lòng nhập Tên bài dạy!');
       return;
@@ -155,7 +121,8 @@ export const LessonConfigForm: React.FC = () => {
       tableFormat,
       language,
       options,
-      coreContent: (coreContent + '\n' + extractedFileContent).trim() || 'Sử dụng kiến thức SGK chuẩn hiện hành',
+      coreContent: coreContent.trim(),
+      sourceDocuments: uploadedFiles,
     });
   };
 
@@ -506,18 +473,20 @@ export const LessonConfigForm: React.FC = () => {
           <label className="block text-xs font-bold text-slate-700 mb-1.5">
             Đính Kèm Tài Liệu Nguồn (PDF, DOCX, Ảnh Sách OCR)
           </label>
-          <label className="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 hover:bg-slate-100/70 cursor-pointer transition-all">
+          <label onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); void addFiles(Array.from(e.dataTransfer.files)); }} className="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 hover:bg-slate-100/70 cursor-pointer transition-all">
             <UploadCloud className="w-8 h-8 text-sky-600 mb-2" />
             <span className="text-xs font-semibold text-slate-800">
               Kéo thả tài liệu vào đây hoặc bấm để chọn tệp
             </span>
             <span className="text-[11px] text-slate-500 mt-1">
-              Hỗ trợ PDF (tối đa 40MB), Word (.docx), Ảnh chụp trang sách (PNG, JPG)
+              PDF, Word (.docx), TXT/MD, ảnh PNG/JPG. Tổng tối đa 40 MB.
             </span>
             <input
               type="file"
               multiple
-              accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"
+              accept={SOURCE_ACCEPT}
+              aria-label="Chọn tài liệu nguồn"
+              disabled={isReadingFile || isGenerating}
               onChange={handleFileUpload}
               className="hidden"
             />
@@ -535,14 +504,25 @@ export const LessonConfigForm: React.FC = () => {
               {uploadedFiles.map((file, i) => (
                 <span key={i} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-[11px] text-slate-700 border border-slate-200">
                   <FileText className="w-3 h-3 text-sky-600" />
-                  <span>{file.name}</span>
-                  <span className="text-slate-500 font-mono">({file.size})</span>
+                  <span>{file.name}{file.text ? ` — ${file.text.length.toLocaleString()} ký tự` : " — sẵn sàng gửi AI"}</span>
+                  <span className="text-slate-500 font-mono">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                  <button type="button" aria-label={`Bỏ tệp ${file.name}`} disabled={isReadingFile || isGenerating} onClick={() => setUploadedFiles(prev => prev.filter((_, index) => index !== i))} className="ml-1 text-rose-600">×</button>
                 </span>
               ))}
             </div>
           )}
         </div>
 
+        {fileErrors.length > 0 && <div role="alert" className="rounded-xl bg-rose-50 p-3 text-xs text-rose-800">
+          {fileErrors.map((message, i) => <p key={i}>{message}</p>)}
+          <p>Chọn lại tệp lỗi hoặc xác nhận bỏ qua các tệp này trước khi tạo.</p>
+          <button type="button" onClick={() => setFileErrors([])} className="mt-2 underline font-bold">Bỏ qua tệp lỗi</button>
+        </div>}
+        {!geminiApiKey.trim() && <div className="rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
+          Cần Gemini API Key để AI soạn bài từ nguồn của thầy/cô.
+          <button type="button" onClick={currentUser ? openProfileModal : openLoginModal} className="ml-2 underline font-bold">Cấu hình API Key</button>
+        </div>}
+        {generationError && <div role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{generationError}</div>}
         {/* Action Button & Loading Status */}
         <div className="pt-2">
           {isGenerating && (
@@ -554,7 +534,7 @@ export const LessonConfigForm: React.FC = () => {
 
           <button
             type="submit"
-            disabled={isGenerating || isReadingFile}
+            disabled={isGenerating || isReadingFile || fileErrors.length > 0}
             className="w-full py-4 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-sm shadow-md shadow-sky-600/25 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-3"
           >
             {isGenerating ? (
