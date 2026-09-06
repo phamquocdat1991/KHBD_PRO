@@ -37,6 +37,17 @@
 - Sao chép: có thông báo thành công và clipboard chứa nội dung bài tương ứng.
 - Nhận bốn tệp TXT, DOCX, PDF, PNG thành công; lượt gọi đa phương thức đầu trả HTTP 503; lượt thử lại bị bộ kiểm tra cấu trúc chặn, không lưu bài thiếu. Bản sửa schema cần được kiểm thử tiếp trên Preview với cùng bốn nguồn.
 
+## Xác minh Preview 2.0.2
+
+- Vercel Preview của commit `1006b75` ở trạng thái READY; giao diện hiển thị v2.0.2.
+- Đăng nhập BYOK lại qua biểu mẫu bảo mật thành công.
+- Gemini 3.6 tạo thành công từ đúng bốn tệp TXT/DOCX/PDF/PNG với schema mới; thư viện tăng từ 3 lên 4.
+- Phiếu học tập và đáp án có đủ bốn mã đúng: `TXT-7621`, `DOCX-3847`, `PDF-5913`, `IMG-9284`; nêu đúng ba biến kiểm soát theo từng nguồn.
+- Bốn hoạt động 7 + 18 + 12 + 8 = 45 phút; bảng 4 cột và kịch bản 3 slide hiển thị đầy đủ.
+- Tìm kiếm tên và lọc THCS trả đúng một bài QA; mở lại được bài. Bấm xuất Word từ thư viện và PPTX từ Studio không phát sinh thông báo lỗi.
+- Chạy lại toàn bộ 46 kiểm thử trên cây mã phát hành: đạt.
+- Giới hạn nội dung AI còn tồn tại: bài sinh có cụm “vôi sống CaCO3” sai tên chất và ví dụ muối dưa cần rà chuyên môn; một nhiệm vụ ghi 5 phút trong hàng phân bổ 3 phút. Đây là nội dung sinh biến thiên, chưa coi chất lượng sư phạm là đã đạt toàn diện.
+
 ## Giới hạn và chức năng chưa kết nối
 
 - Đăng nhập Google/email và chia sẻ bài bằng liên kết trực tuyến chưa có dịch vụ phía sau trong bản hiện tại; bổ sung cần phê duyệt riêng.
