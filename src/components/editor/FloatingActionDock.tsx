@@ -16,7 +16,7 @@ export const FloatingActionDock: React.FC = () => {
 
   const handleExportWord = async () => {
     setError('');
-    try { await DocxExportService.exportLessonPlanToDocx(activeLesson, currentUser); } catch { setError('Không xuất được Word. Hãy thử lại.'); }
+    try { await DocxExportService.exportLessonPlanToDocx(activeLesson, currentUser); } catch(error) { setError(`Không xuất được Word. ${error instanceof Error ? error.message : 'Hãy thử lại.'}`); }
   };
 
   const handleExportPptx = async () => {

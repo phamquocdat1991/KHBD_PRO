@@ -6,6 +6,7 @@ import { DocxExportService } from '../../services/docxExportService';
 import { PptxExportService } from '../../services/pptxExportService';
 import { Bot, GitBranch, Presentation, Send, FileDown } from 'lucide-react';
 import { MindmapNode } from '../../types';
+import { LessonImagesPanel } from './LessonImagesPanel';
 
 export const CopilotPanel: React.FC = () => {
   const { currentUser, geminiApiKey } = useAuth();
@@ -13,7 +14,7 @@ export const CopilotPanel: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [chatError, setChatError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'mindmap' | 'slides' | 'chat'>('mindmap');
+  const [activeTab, setActiveTab] = useState<'mindmap' | 'slides' | 'chat' | 'images'>('mindmap');
   const [chatInput, setChatInput] = useState('');
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
     {
@@ -38,7 +39,7 @@ export const CopilotPanel: React.FC = () => {
 
   const handleExportDocx = async () => {
     if (activeLesson) {
-      try { await DocxExportService.exportLessonPlanToDocx(activeLesson, currentUser); } catch { setChatError('Không xuất được Word. Vui lòng thử lại.'); }
+      try { await DocxExportService.exportLessonPlanToDocx(activeLesson, currentUser); } catch(error) { setChatError(`Không xuất được Word. ${error instanceof Error ? error.message : 'Vui lòng thử lại.'}`); }
     }
   };
 
@@ -83,7 +84,8 @@ export const CopilotPanel: React.FC = () => {
         </div>
 
         {/* Tab switchers */}
-        <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200/60">
+        <div className="flex flex-wrap rounded-xl bg-slate-100 p-1 border border-slate-200/60">
+          <button onClick={()=>setActiveTab('images')} className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${activeTab==='images'?'bg-white text-sky-700 shadow-sm':'text-slate-600'}`}>Hình minh họa</button>
           <button
             onClick={() => setActiveTab('mindmap')}
             className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
@@ -120,6 +122,7 @@ export const CopilotPanel: React.FC = () => {
       {chatError && <p role="alert" className="mb-3 text-xs text-rose-700">{chatError}</p>}
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+        <div hidden={activeTab!=='images'}><LessonImagesPanel key={activeLesson?.id}/></div>
         {activeTab === 'mindmap' && (
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 min-h-[300px]">
             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">

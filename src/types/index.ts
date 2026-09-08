@@ -84,7 +84,19 @@ export interface SlideItem {
   notesForTeacher?: string;
 }
 
+export interface LessonImage {
+  id: string;
+  activityId: string;
+  title: string;
+  purpose: string;
+  prompt: string;
+  caption: string;
+  assetId?: string;
+  inserted?: boolean;
+}
+
 export interface LessonPlan {
+  images?: LessonImage[];
   id: string;
   title: string;
   subject: Subject;

@@ -3,6 +3,8 @@ import JSZip from 'jszip';
 import {DocxExportService} from '../src/services/docxExportService';
 import {PptxExportService} from '../src/services/pptxExportService';
 import {SAMPLE_LESSONS} from '../src/data/sampleLessons';
+import 'fake-indexeddb/auto';
+import {saveImage} from '../src/services/imageStore';
 const saved = vi.hoisted(()=>({blob:null as Blob|null,name:''}));
 vi.mock('file-saver',()=>({saveAs:(blob:Blob,name:string)=>{saved.blob=blob;saved.name=name;}}));
 beforeEach(()=>{saved.blob=null;saved.name='';});
@@ -26,4 +28,16 @@ it('exports English labels when English is selected',async()=>{
   await DocxExportService.exportLessonPlanToDocx({...SAMPLE_LESSONS[0],language:'en'});
   const zip=await JSZip.loadAsync(await saved.blob!.arrayBuffer());
   expect(await zip.file('word/document.xml')!.async('string')).toContain('I. OBJECTIVES');
+});
+it('embeds inserted image bytes and captions in Word',async()=>{
+  const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=';
+  const assetId=await saveImage('data:image/png;base64,'+png);
+  vi.stubGlobal('Image',class {naturalWidth=1;naturalHeight=1;onload:()=>void;set src(_:string){queueMicrotask(()=>this.onload());}});
+  try {
+    await DocxExportService.exportLessonPlanToDocx({...SAMPLE_LESSONS[0],images:[{id:'i',activityId:SAMPLE_LESSONS[0].activities[0].id,title:'Hình',purpose:'Quan sát',prompt:'Vẽ',caption:'IMAGE-CAPTION-41',assetId,inserted:true}]});
+    const zip=await JSZip.loadAsync(await saved.blob!.arrayBuffer());
+    const media=Object.keys(zip.files).find(name=>name.startsWith('word/media/')&&name.endsWith('.png'))!;
+    expect(await zip.file(media)!.async('base64')).toBe(png);
+    expect(await zip.file('word/document.xml')!.async('string')).toContain('IMAGE-CAPTION-41');
+  } finally {vi.unstubAllGlobals();}
 });

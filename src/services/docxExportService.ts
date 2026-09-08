@@ -1,7 +1,17 @@
-import {Document,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,BorderStyle,Packer} from 'docx';
+import {Document,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,BorderStyle,Packer,ImageRun} from 'docx';
 import {saveAs} from 'file-saver';
 import {LessonPlan,TeacherProfile} from '../types';
 import {stepLabels,tableHeaders,stepTime} from './lessonPresentation';
+import {loadImage} from './imageStore';
+
+async function imageSize(src:string):Promise<{width:number;height:number}> {
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{const scale=Math.min(550/img.naturalWidth,420/img.naturalHeight,1);resolve({width:Math.round(img.naturalWidth*scale),height:Math.round(img.naturalHeight*scale)});};
+    img.onerror=()=>reject(new Error('Ảnh đã lưu không đọc được. Hãy tạo lại ảnh trước khi xuất Word.'));
+    img.src=src;
+  });
+}
 
 export class DocxExportService {
   static async exportLessonPlanToDocx(lesson:LessonPlan,teacher?:TeacherProfile|null):Promise<void> {
@@ -40,6 +50,11 @@ export class DocxExportService {
         rows.push(new TableRow({children:cells}));
       });
       if(lesson.tableFormat!=='1col')children.push(new Table({width:{size:100,type:WidthType.PERCENTAGE},columnWidths:Array(headers.length).fill(Math.floor(9300/headers.length)),rows}));
+      for(const image of lesson.images?.filter(i=>i.inserted && i.assetId && i.activityId===a.id)||[]) {
+        const src=await loadImage(image.assetId!);
+        const size=await imageSize(src);
+        children.push(new Paragraph({alignment:AlignmentType.CENTER,children:[new ImageRun({type:src.startsWith('data:image/png')?'png':'jpg',data:src,transformation:size})]}),p(image.caption,false,true));
+      }
     }
     if(lesson.options.worksheets&&lesson.worksheetsAppendix?.length)children.push(p(tr('PHỤ LỤC: PHIẾU HỌC TẬP','APPENDIX: WORKSHEETS'),true),...lesson.worksheetsAppendix.map(w=>p(w)));
     const doc=new Document({sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:1134,bottom:1134,left:1417,right:1134}}},children}]});
