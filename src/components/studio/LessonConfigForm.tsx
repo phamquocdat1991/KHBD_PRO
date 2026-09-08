@@ -122,37 +122,14 @@ export const LessonConfigForm: React.FC = () => {
             <Sliders className="w-5 h-5 text-sky-600" />
             <span>Cấu Hình Kế Hoạch Bài Dạy Mới</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Chuẩn Công văn 5512 & TT 02/2025 • Phát triển bởi: Anh Giáo PHẠM QUỐC ĐẠT
-          </p>
         </div>
-
-        {/* Tùy chọn ngôn ngữ bài soạn */}
-        <div className="flex items-center gap-2 p-1 rounded-2xl bg-slate-100 border border-slate-200">
-          <Globe className="w-4 h-4 text-sky-600 ml-2" />
-          <button
-            type="button"
-            onClick={() => setLanguage('vi')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              language === 'vi'
-                ? 'bg-white text-sky-700 shadow-xs border border-slate-200'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🇻🇳 Tiếng Việt
-          </button>
-          <button
-            type="button"
-            onClick={() => setLanguage('en')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              language === 'en'
-                ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🇬🇧 Tiếng Anh
-          </button>
-        </div>
+        <label className="lesson-language">
+          <Globe size={16} />
+          <select aria-label="Ngôn ngữ bài soạn" value={language} onChange={e => setLanguage(e.target.value as LessonLanguage)}>
+            <option value="vi">Tiếng Việt</option>
+            <option value="en">Tiếng Anh</option>
+          </select>
+        </label>
       </div>
 
       <div className="draft-status" role="status">{draftStatus}<span>Tệp đính kèm cần chọn lại khi tải lại trang.</span></div>
@@ -292,6 +269,14 @@ export const LessonConfigForm: React.FC = () => {
               </div>
             </label>
 
+
+          </div>
+
+        </div>
+        <details className="advanced-settings">
+          <summary><Settings2 size={17} />Tùy chỉnh chi tiết & tài liệu nguồn<span>Mở rộng</span></summary>
+          <div className="advanced-content space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Giáo án bài học STEM CV 3089/908 */}
             <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 cursor-pointer transition-all shadow-2xs">
               <input
@@ -321,10 +306,6 @@ export const LessonConfigForm: React.FC = () => {
             </label>
           </div>
 
-        </div>
-        <details className="advanced-settings">
-          <summary><Settings2 size={17} />Tùy chỉnh chi tiết & tài liệu nguồn<span>Mở rộng</span></summary>
-          <div className="advanced-content space-y-6">
         {/* Mẫu bảng KHBD */}
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-2">Định Dạng Bảng KHBD</label>

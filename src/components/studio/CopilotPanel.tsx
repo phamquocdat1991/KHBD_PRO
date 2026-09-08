@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { DocxExportService } from '../../services/docxExportService';
 import { PptxExportService } from '../../services/pptxExportService';
 import { Bot, GitBranch, Presentation, Send, FileDown } from 'lucide-react';
+import { LessonMindmap } from './LessonMindmap';
 import { MindmapNode } from '../../types';
 
 export const CopilotPanel: React.FC = () => {
@@ -127,7 +128,10 @@ export const CopilotPanel: React.FC = () => {
               <span className="text-sky-600 text-[10px] font-semibold bg-sky-50 px-2 py-0.5 rounded border border-sky-200">Tự động bóc tách</span>
             </div>
             {activeLesson?.mindmap ? (
-              renderMindmapNode(activeLesson.mindmap)
+              <>
+                <LessonMindmap root={activeLesson.mindmap} />
+                <details className="mindmap-details"><summary>Xem đầy đủ nội dung sơ đồ</summary>{renderMindmapNode(activeLesson.mindmap)}</details>
+              </>
             ) : (
               <div className="text-center py-12 text-slate-400 text-xs">
                 Chưa có sơ đồ tư duy. Hãy chọn hoặc tạo bài dạy mới.
