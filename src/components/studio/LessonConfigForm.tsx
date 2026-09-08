@@ -1,22 +1,25 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { DRAFT_KEY, readStudioDraft, DEFAULT_OPTIONS, SUBJECTS, TEXTBOOKS } from '../../services/studioDraft';
 import { useAuth } from '../../context/AuthContext';
 import { prepareSourceDocument, SourceDocument, MAX_SOURCE_BYTES, SOURCE_ACCEPT } from '../../services/sourceDocumentService';
 import { useLesson } from '../../context/LessonContext';
 import { Subject, GradeLevel, TextbookEdition, TableFormat, AdvancedOptions, LessonLanguage } from '../../types';
-import { Sparkles, UploadCloud, FileText, Check, Settings2, Sliders, Loader2, Globe, Cpu, Lightbulb, Compass } from 'lucide-react';
+import { Sparkles, UploadCloud, FileText, Check, Settings2, Sliders, Loader2, Globe, Cpu, Lightbulb, Compass, Calculator, BookOpen, Atom, CalendarDays } from 'lucide-react';
 
 export const LessonConfigForm: React.FC = () => {
   const { createLessonPlan, isGenerating, generationProgress, generationError } = useLesson();
   const { geminiApiKey, openProfileModal, openLoginModal, currentUser } = useAuth();
 
-  const [title, setTitle] = useState('');
-  const [subject, setSubject] = useState<Subject>('Toán');
-  const [grade, setGrade] = useState<GradeLevel>('Lớp 11');
-  const [textbook, setTextbook] = useState<TextbookEdition>('Cánh Diều');
-  const [periodsCount, setPeriodsCount] = useState(2);
-  const [tableFormat, setTableFormat] = useState<TableFormat>('2col');
-  const [language, setLanguage] = useState<LessonLanguage>('vi');
-  const [coreContent, setCoreContent] = useState('');
+  const [restoredDraft] = useState(readStudioDraft);
+  const [draftStatus, setDraftStatus] = useState('');
+  const [title, setTitle] = useState(restoredDraft?.title ?? '');
+  const [subject, setSubject] = useState<Subject>(restoredDraft?.subject ?? 'Toán');
+  const [grade, setGrade] = useState<GradeLevel>(restoredDraft?.grade ?? 'Lớp 11');
+  const [textbook, setTextbook] = useState<TextbookEdition>(restoredDraft?.textbook ?? 'Cánh Diều');
+  const [periodsCount, setPeriodsCount] = useState(restoredDraft?.periodsCount ?? 2);
+  const [tableFormat, setTableFormat] = useState<TableFormat>(restoredDraft?.tableFormat ?? '2col');
+  const [language, setLanguage] = useState<LessonLanguage>(restoredDraft?.language ?? 'vi');
+  const [coreContent, setCoreContent] = useState(restoredDraft?.coreContent ?? '');
   const [uploadedFiles, setUploadedFiles] = useState<SourceDocument[]>([]);
   const [fileAnalysisStatus, setFileAnalysisStatus] = useState('');
   const [fileErrors, setFileErrors] = useState<string[]>([]);
@@ -24,25 +27,14 @@ export const LessonConfigForm: React.FC = () => {
   const [isReadingFile, setIsReadingFile] = useState(false);
 
   // Advanced Options
-  const [options, setOptions] = useState<AdvancedOptions>({
-    nls: true,
-    aiEducation: true,
-    stemLesson: false,
-    teachingMethod: 'Phương pháp dạy học tích cực',
-    warmupType: 'Khởi động sôi nổi (Trò chơi / Hoạt náo tương tác)',
-    customIntegration: '',
-    gdqpan: false,
-    timeline: true,
-    mathFormulas: true,
-    worksheets: true,
-  });
-
-  const subjectsList: Subject[] = [
-    'Toán', 'Ngữ văn', 'Tiếng Anh', 'Khoa học tự nhiên',
-    'Vật lí', 'Hóa học', 'Sinh học', 'Lịch sử', 'Địa lí',
-    'Tin học', 'Công nghệ', 'Giáo dục thể chất', 'Âm nhạc', 'Mĩ thuật',
-    'Hoạt động trải nghiệm, hướng nghiệp'
-  ];
+  const [options, setOptions] = useState<AdvancedOptions>(restoredDraft?.options ?? { ...DEFAULT_OPTIONS });
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ version: 1, title, subject, grade, textbook, periodsCount, tableFormat, language, coreContent, options }));
+      setDraftStatus('Đã lưu nháp trên thiết bị');
+    } catch { setDraftStatus('Chưa lưu được nháp. Hãy giữ trang này mở.'); }
+  }, [title, subject, grade, textbook, periodsCount, tableFormat, language, coreContent, options]);
+  const subjectsList = SUBJECTS;
 
   const gradesList: GradeLevel[] = [
     'Lớp 1', 'Lớp 2', 'Lớp 3', 'Lớp 4', 'Lớp 5',
@@ -50,12 +42,7 @@ export const LessonConfigForm: React.FC = () => {
     'Lớp 10', 'Lớp 11', 'Lớp 12'
   ];
 
-  const textbooks: TextbookEdition[] = [
-    'Kết nối tri thức với cuộc sống',
-    'Cánh Diều',
-    'Chân trời sáng tạo',
-    'Bộ sách hiện hành khác'
-  ];
+  const textbooks = TEXTBOOKS;
 
   const teachingMethodsList = [
     'Phương pháp dạy học tích cực',
@@ -127,7 +114,7 @@ export const LessonConfigForm: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
+    <div className="lesson-config bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 mb-5 border-b border-slate-100 gap-3">
         <div>
@@ -135,46 +122,34 @@ export const LessonConfigForm: React.FC = () => {
             <Sliders className="w-5 h-5 text-sky-600" />
             <span>Cấu Hình Kế Hoạch Bài Dạy Mới</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Chuẩn Công văn 5512 & TT 02/2025 • Phát triển bởi: Anh Giáo PHẠM QUỐC ĐẠT
-          </p>
         </div>
-
-        {/* Tùy chọn ngôn ngữ bài soạn */}
-        <div className="flex items-center gap-2 p-1 rounded-2xl bg-slate-100 border border-slate-200">
-          <Globe className="w-4 h-4 text-sky-600 ml-2" />
-          <button
-            type="button"
-            onClick={() => setLanguage('vi')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              language === 'vi'
-                ? 'bg-white text-sky-700 shadow-xs border border-slate-200'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🇻🇳 Tiếng Việt
-          </button>
-          <button
-            type="button"
-            onClick={() => setLanguage('en')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              language === 'en'
-                ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🇬🇧 Tiếng Anh
-          </button>
-        </div>
+        <label className="lesson-language">
+          <Globe size={16} />
+          <select aria-label="Ngôn ngữ bài soạn" value={language} onChange={e => setLanguage(e.target.value as LessonLanguage)}>
+            <option value="vi">Tiếng Việt</option>
+            <option value="en">Tiếng Anh</option>
+          </select>
+        </label>
       </div>
 
+      <div className="draft-status" role="status">{draftStatus}<span>Tệp đính kèm cần chọn lại khi tải lại trang.</span></div>
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="quick-subjects" aria-label="Chọn nhanh môn học">
+          {([{ value: 'Toán', icon: Calculator, note: 'Tư duy & khám phá' }, { value: 'Ngữ văn', icon: BookOpen, note: 'Đọc hiểu & sáng tạo' }, { value: 'Khoa học tự nhiên', icon: Atom, note: 'Thực hành & trải nghiệm' }] as const).map(({value, icon: Icon, note}, index) => (
+            <button key={value} type="button" aria-pressed={subject === value} className={`quick-subject tone-${index}`} onClick={() => setSubject(value)}>
+              <span><i><Icon size={23} /></i><strong>{value === 'Khoa học tự nhiên' ? 'KHTN' : value}</strong></span>
+              <small><CalendarDays size={14} />{note}</small>
+            </button>
+          ))}
+        </div>
         {/* Tên bài soạn */}
         <div>
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
             Tên Bài Dạy / Chủ Đề <span className="text-rose-500">*</span>
           </label>
           <input
+            id="lesson-title"
+            aria-label="Tên bài dạy"
             type="text"
             required
             value={title}
@@ -189,6 +164,7 @@ export const LessonConfigForm: React.FC = () => {
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">Môn Học</label>
             <select
+              aria-label="Môn học"
               value={subject}
               onChange={(e) => setSubject(e.target.value as Subject)}
               className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-sky-500 focus:bg-white rounded-xl text-xs text-slate-800 focus:outline-none"
@@ -202,6 +178,7 @@ export const LessonConfigForm: React.FC = () => {
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">Khối Lớp</label>
             <select
+              aria-label="Khối lớp"
               value={grade}
               onChange={(e) => setGrade(e.target.value as GradeLevel)}
               className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-sky-500 focus:bg-white rounded-xl text-xs text-slate-800 focus:outline-none"
@@ -215,6 +192,7 @@ export const LessonConfigForm: React.FC = () => {
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">Số Tiết Thực Hiện</label>
             <select
+              aria-label="Số tiết"
               value={periodsCount}
               onChange={(e) => setPeriodsCount(Number(e.target.value))}
               className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-sky-500 focus:bg-white rounded-xl text-xs text-slate-800 focus:outline-none"
@@ -247,6 +225,86 @@ export const LessonConfigForm: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* TÙY CHỌN SƯ PHẠM NÂNG CAO (THE USER'S DETAILED REQUIREMENTS) */}
+        <div className="pedagogy-options p-5 rounded-2xl bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-50 border border-slate-200 space-y-4">
+          <div className="text-xs font-bold text-slate-800 flex items-center justify-between border-b border-slate-200 pb-2">
+            <span className="flex items-center gap-2">
+              <Settings2 className="w-4 h-4 text-sky-600" />
+              <span className="uppercase tracking-wider">Tùy Chọn Sư Phạm Nâng Cao</span>
+            </span>
+            <span className="text-[11px] text-sky-700 font-medium">Chuẩn quy định BGD&ĐT</span>
+          </div>
+
+          {/* Core pedagogical switches */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {/* Tích hợp NLS Thông tư 02/2025 & CV 3456 */}
+            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-sky-300 cursor-pointer transition-all shadow-2xs">
+              <input
+                type="checkbox"
+                checked={options.nls}
+                onChange={(e) => setOptions({ ...options, nls: e.target.checked })}
+                className="mt-0.5 w-4 h-4 rounded text-sky-600 border-slate-300 focus:ring-sky-500"
+              />
+              <div className="text-xs">
+                <span className="font-bold text-slate-900 block">Tích hợp Năng lực số (NLS)</span>
+                <span className="text-[11px] text-slate-500">Thông tư 02/2025/TT-BGDĐT & CV 3456/BGDĐT</span>
+              </div>
+            </label>
+
+            {/* Tích hợp Giáo dục AI QĐ 2422 */}
+            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 cursor-pointer transition-all shadow-2xs">
+              <input
+                type="checkbox"
+                checked={options.aiEducation}
+                onChange={(e) => setOptions({ ...options, aiEducation: e.target.checked })}
+                className="mt-0.5 w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+              />
+              <div className="text-xs">
+                <span className="font-bold text-slate-900 block flex items-center gap-1">
+                  <span>Tích hợp Giáo dục AI</span>
+                  <span className="px-1.5 py-0.2 rounded text-[9px] bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">Mới</span>
+                </span>
+                <span className="text-[11px] text-slate-500">Khung Quyết định 2422/QĐ-BGDĐT</span>
+              </div>
+            </label>
+
+
+          </div>
+
+        </div>
+        <details className="advanced-settings">
+          <summary><Settings2 size={17} />Tùy chỉnh chi tiết & tài liệu nguồn<span>Mở rộng</span></summary>
+          <div className="advanced-content space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Giáo án bài học STEM CV 3089/908 */}
+            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 cursor-pointer transition-all shadow-2xs">
+              <input
+                type="checkbox"
+                checked={options.stemLesson}
+                onChange={(e) => setOptions({ ...options, stemLesson: e.target.checked })}
+                className="mt-0.5 w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500"
+              />
+              <div className="text-xs">
+                <span className="font-bold text-slate-900 block">Giáo án Bài học STEM</span>
+                <span className="text-[11px] text-slate-500">Quy trình kĩ thuật CV 3089/BGDĐT & CV 908/BGDĐT</span>
+              </div>
+            </label>
+
+            {/* Lồng ghép GDQP&AN */}
+            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-amber-300 cursor-pointer transition-all shadow-2xs">
+              <input
+                type="checkbox"
+                checked={options.gdqpan}
+                onChange={(e) => setOptions({ ...options, gdqpan: e.target.checked })}
+                className="mt-0.5 w-4 h-4 rounded text-amber-600 border-slate-300 focus:ring-amber-500"
+              />
+              <div className="text-xs">
+                <span className="font-bold text-slate-900 block">Giáo dục Quốc phòng & An ninh</span>
+                <span className="text-[11px] text-slate-500">Thông tư 08/2024/TT-BGDĐT</span>
+              </div>
+            </label>
+          </div>
 
         {/* Mẫu bảng KHBD */}
         <div>
@@ -299,78 +357,7 @@ export const LessonConfigForm: React.FC = () => {
           </div>
         </div>
 
-        {/* TÙY CHỌN SƯ PHẠM NÂNG CAO (THE USER'S DETAILED REQUIREMENTS) */}
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-50 border border-slate-200 space-y-4">
-          <div className="text-xs font-bold text-slate-800 flex items-center justify-between border-b border-slate-200 pb-2">
-            <span className="flex items-center gap-2">
-              <Settings2 className="w-4 h-4 text-sky-600" />
-              <span className="uppercase tracking-wider">Tùy Chọn Sư Phạm Nâng Cao</span>
-            </span>
-            <span className="text-[11px] text-sky-700 font-medium">Chuẩn quy định BGD&ĐT</span>
-          </div>
-
-          {/* Core pedagogical switches */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {/* Tích hợp NLS Thông tư 02/2025 & CV 3456 */}
-            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-sky-300 cursor-pointer transition-all shadow-2xs">
-              <input
-                type="checkbox"
-                checked={options.nls}
-                onChange={(e) => setOptions({ ...options, nls: e.target.checked })}
-                className="mt-0.5 w-4 h-4 rounded text-sky-600 border-slate-300 focus:ring-sky-500"
-              />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block">Tích hợp Năng lực số (NLS)</span>
-                <span className="text-[11px] text-slate-500">Thông tư 02/2025/TT-BGDĐT & CV 3456/BGDĐT</span>
-              </div>
-            </label>
-
-            {/* Tích hợp Giáo dục AI QĐ 2422 */}
-            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 cursor-pointer transition-all shadow-2xs">
-              <input
-                type="checkbox"
-                checked={options.aiEducation}
-                onChange={(e) => setOptions({ ...options, aiEducation: e.target.checked })}
-                className="mt-0.5 w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
-              />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block flex items-center gap-1">
-                  <span>Tích hợp Giáo dục AI</span>
-                  <span className="px-1.5 py-0.2 rounded text-[9px] bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">Mới</span>
-                </span>
-                <span className="text-[11px] text-slate-500">Khung Quyết định 2422/QĐ-BGDĐT</span>
-              </div>
-            </label>
-
-            {/* Giáo án bài học STEM CV 3089/908 */}
-            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 cursor-pointer transition-all shadow-2xs">
-              <input
-                type="checkbox"
-                checked={options.stemLesson}
-                onChange={(e) => setOptions({ ...options, stemLesson: e.target.checked })}
-                className="mt-0.5 w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500"
-              />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block">Giáo án Bài học STEM</span>
-                <span className="text-[11px] text-slate-500">Quy trình kĩ thuật CV 3089/BGDĐT & CV 908/BGDĐT</span>
-              </div>
-            </label>
-
-            {/* Lồng ghép GDQP&AN */}
-            <label className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-amber-300 cursor-pointer transition-all shadow-2xs">
-              <input
-                type="checkbox"
-                checked={options.gdqpan}
-                onChange={(e) => setOptions({ ...options, gdqpan: e.target.checked })}
-                className="mt-0.5 w-4 h-4 rounded text-amber-600 border-slate-300 focus:ring-amber-500"
-              />
-              <div className="text-xs">
-                <span className="font-bold text-slate-900 block">Giáo dục Quốc phòng & An ninh</span>
-                <span className="text-[11px] text-slate-500">Thông tư 08/2024/TT-BGDĐT</span>
-              </div>
-            </label>
-          </div>
-
+          <div className="space-y-4">
           {/* Phương pháp & Khởi động */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
             {/* Phương Pháp */}
@@ -513,6 +500,8 @@ export const LessonConfigForm: React.FC = () => {
           )}
         </div>
 
+          </div>
+        </details>
         {fileErrors.length > 0 && <div role="alert" className="rounded-xl bg-rose-50 p-3 text-xs text-rose-800">
           {fileErrors.map((message, i) => <p key={i}>{message}</p>)}
           <p>Chọn lại tệp lỗi hoặc xác nhận bỏ qua các tệp này trước khi tạo.</p>
@@ -524,7 +513,7 @@ export const LessonConfigForm: React.FC = () => {
         </div>}
         {generationError && <div role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{generationError}</div>}
         {/* Action Button & Loading Status */}
-        <div className="pt-2">
+        <div className="generate-action pt-2">
           {isGenerating && (
             <div className="mb-3 p-3.5 rounded-2xl bg-sky-50 border border-sky-200 flex items-center gap-3">
               <Loader2 className="w-5 h-5 text-sky-600 animate-spin" />
@@ -545,7 +534,7 @@ export const LessonConfigForm: React.FC = () => {
             ) : (
               <>
                 <Sparkles className="w-5 h-5 text-amber-300" />
-                <span>✨ Tạo Kế Hoạch Bài Dạy Với AI ({language === 'en' ? 'English Lesson Plan' : 'Chuẩn CV 5512'})</span>
+                <span>Tạo Kế Hoạch Bài Dạy Với AI{language === 'en' ? ' · English' : ''}</span>
               </>
             )}
           </button>

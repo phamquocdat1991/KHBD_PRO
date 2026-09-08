@@ -8,10 +8,10 @@ export const AppHeader: React.FC = () => {
   const { activeView, setActiveView, library, selectedModel, setSelectedModel } = useLesson();
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-xl no-print shadow-xs">
+    <header className="app-header sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-xl no-print shadow-xs">
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 min-h-16 py-2 flex flex-wrap items-center justify-between gap-3">
         {/* Left: Brand */}
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveView('studio')}>
+        <div className="flex items-center gap-3 cursor-pointer" role="button" tabIndex={0} aria-label="Về studio" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveView('studio'); } }} onClick={() => setActiveView('studio')}>
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 shadow-md shadow-sky-500/20">
             <Sparkles className="w-5 h-5 text-white" />
           </div>
@@ -21,7 +21,7 @@ export const AppHeader: React.FC = () => {
                 KHBD AI PRO
               </span>
               <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                v2.0.2
+                v2.1.0
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
@@ -35,9 +35,10 @@ export const AppHeader: React.FC = () => {
         </div>
 
         {/* Center View Switcher */}
-        <nav className="flex items-center rounded-2xl bg-slate-100 p-1 border border-slate-200/60 shadow-inner">
+        <nav aria-label="Điều hướng chính" className="header-nav flex items-center rounded-2xl bg-slate-100 p-1 border border-slate-200/60 shadow-inner">
           <button
             onClick={() => setActiveView('studio')}
+            aria-current={activeView === 'studio' ? 'page' : undefined}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               activeView === 'studio'
                 ? 'bg-white text-sky-700 shadow-sm font-bold border border-slate-200/60'
@@ -50,6 +51,7 @@ export const AppHeader: React.FC = () => {
 
           <button
             onClick={() => setActiveView('library')}
+            aria-current={activeView === 'library' ? 'page' : undefined}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               activeView === 'library'
                 ? 'bg-white text-sky-700 shadow-sm font-bold border border-slate-200/60'
@@ -65,6 +67,7 @@ export const AppHeader: React.FC = () => {
 
           <button
             onClick={() => setActiveView('guidelines')}
+            aria-current={activeView === 'guidelines' ? 'page' : undefined}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               activeView === 'guidelines'
                 ? 'bg-white text-sky-700 shadow-sm font-bold border border-slate-200/60'
@@ -87,9 +90,9 @@ export const AppHeader: React.FC = () => {
               onChange={(e) => setSelectedModel(e.target.value as any)}
               className="bg-transparent text-slate-700 text-xs font-semibold focus:outline-none cursor-pointer"
             >
-              <option value="gemini-3.8-flash" className="bg-white text-slate-800">Gemini 3.8 Flash (Khuyên dùng)</option>
-              <option value="gemini-3.6-flash" className="bg-white text-slate-800">Gemini 3.6 Flash (Tiết kiệm)</option>
-              <option value="gemini-2.5-flash" className="bg-white text-slate-800">Gemini 2.5 Flash (Tốc độ)</option>
+              <option value="gemini-3.8-flash" className="bg-white text-slate-800">Gemini 3.8 Flash</option>
+              <option value="gemini-3.6-flash" className="bg-white text-slate-800">Gemini 3.6 Flash</option>
+              <option value="gemini-2.5-flash" className="bg-white text-slate-800">Gemini 2.5 Flash</option>
             </select>
           </div>
 

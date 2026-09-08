@@ -43,6 +43,7 @@ it('shows missing API key errors in the form and does not add a lesson', async (
 });
 it('persists an edited objective to lesson data', async () => {
   render(<App/>);
+  fireEvent.click(screen.getByRole('button',{name:'Xem & Biên Tập Trang A4'}));
   fireEvent.click(screen.getByRole('button',{name:'Bật chỉnh sửa trực tiếp'}));
   const text = screen.getByText(SAMPLE_LESSONS[0].objectives.knowledge[0],{exact:true});
   text.textContent = 'Nội dung đã chỉnh sửa — EDIT-943';
