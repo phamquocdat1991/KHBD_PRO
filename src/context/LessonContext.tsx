@@ -60,7 +60,7 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState('');
   const [generationError, setGenerationError] = useState('');
-  const [studioTab, setStudioTab] = useState<'form' | 'preview'>('preview');
+  const [studioTab, setStudioTab] = useState<'form' | 'preview'>('form');
   const startNewLesson = () => { setActiveView('studio'); setStudioTab('form'); setGenerationError(''); };
   const [selectedModel, setSelectedModel] = useState<GeminiModelId>('gemini-3.8-flash');
   const [searchQuery, setSearchQuery] = useState('');

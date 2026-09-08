@@ -51,7 +51,7 @@ export const CopilotPanel: React.FC = () => {
   // Render SVG Mindmap Tree recursively
   const renderMindmapNode = (node: MindmapNode, depth = 0) => {
     return (
-      <div key={node.id} className={`space-y-2 ${depth > 0 ? 'ml-4 pl-3 border-l-2 border-sky-300' : ''}`}>
+      <div key={node.id} data-depth={depth} className={`space-y-2 ${depth > 0 ? 'ml-4 pl-3 border-l-2 border-sky-300' : ''}`}>
         <div
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs transition-all ${
             depth === 0
@@ -74,12 +74,12 @@ export const CopilotPanel: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-3xl border border-slate-200/80 p-5 shadow-sm overflow-hidden">
+    <div className="copilot-panel flex flex-col h-full bg-white rounded-3xl border border-slate-200/80 p-5 shadow-sm overflow-hidden">
       {/* Header Tabs */}
       <div className="flex flex-wrap gap-3 items-center justify-between pb-3 mb-3 border-b border-slate-100">
         <div className="flex items-center gap-2">
           <Bot className="w-5 h-5 text-sky-600" />
-          <span className="text-sm font-bold text-slate-900">AI Pedagogical Copilot</span>
+          <span className="text-sm font-bold text-slate-900">Copilot</span>
         </div>
 
         {/* Tab switchers */}
@@ -121,7 +121,7 @@ export const CopilotPanel: React.FC = () => {
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto pr-1 space-y-4">
         {activeTab === 'mindmap' && (
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 min-h-[300px]">
+          <div className="mindmap-surface p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
               <span>Sơ đồ cấu trúc bài dạy</span>
               <span className="text-sky-600 text-[10px] font-semibold bg-sky-50 px-2 py-0.5 rounded border border-sky-200">Tự động bóc tách</span>
@@ -175,8 +175,10 @@ export const CopilotPanel: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'chat' && (
-          <div className="flex flex-col h-[380px]">
+        {activeTab !== 'slides' && (
+          <section className="copilot-chat flex flex-col">
+            <h3>Trợ lý sư phạm AI</h3>
+            <p className="chat-context">{activeLesson ? `Đang trao đổi: ${activeLesson.title}` : 'Chọn một bài trong thư viện để bắt đầu.'}</p>
             <div className="flex-1 overflow-y-auto space-y-3 p-1">
               {messages.map((m, idx) => (
                 <div
@@ -199,7 +201,8 @@ export const CopilotPanel: React.FC = () => {
             <form onSubmit={handleSendMessage} className="mt-3 flex gap-2">
               <input
                 type="text"
-                disabled={isSending}
+                aria-label="Câu hỏi cho trợ lý sư phạm"
+                disabled={isSending || !activeLesson}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Hỏi AI về bài dạy... (Enter để gửi)"
@@ -208,7 +211,7 @@ export const CopilotPanel: React.FC = () => {
               <button
                 type="submit"
                 aria-label="Gửi câu hỏi AI"
-                disabled={isSending || !chatInput.trim()}
+                disabled={isSending || !chatInput.trim() || !activeLesson}
                 className="p-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white shadow-xs transition-colors"
               >
                 <Send className="w-4 h-4" />
@@ -241,7 +244,7 @@ export const CopilotPanel: React.FC = () => {
                 + Hỗ trợ HS yếu
               </button>
             </div>
-          </div>
+          </section>
         )}
       </div>
 
@@ -249,6 +252,7 @@ export const CopilotPanel: React.FC = () => {
       <div className="pt-3 mt-3 border-t border-slate-100 grid grid-cols-2 gap-2">
         <button
           onClick={handleExportDocx}
+          disabled={!activeLesson}
           className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-all"
         >
           <FileDown className="w-3.5 h-3.5" />
@@ -257,6 +261,7 @@ export const CopilotPanel: React.FC = () => {
 
         <button
           onClick={handleExportPptx}
+          disabled={!activeLesson?.slides?.length}
           className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-sm transition-all"
         >
           <Presentation className="w-3.5 h-3.5" />

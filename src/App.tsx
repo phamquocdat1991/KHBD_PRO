@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { LessonProvider, useLesson } from './context/LessonContext';
 import { AppHeader } from './components/layout/AppHeader';
@@ -10,30 +10,30 @@ import { A4DocumentPreview } from './components/editor/A4DocumentPreview';
 import { CopilotPanel } from './components/studio/CopilotPanel';
 import { LoginModal } from './components/auth/LoginModal';
 import { TeacherProfileModal } from './components/auth/TeacherProfileModal';
-import { FileEdit, Eye, Award } from 'lucide-react';
+import { FileEdit, Eye } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
   const { activeView, activeLesson, studioTab, setStudioTab, generationError } = useLesson();
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 selection:bg-sky-500 selection:text-white">
+    <div className="pastel-app flex flex-col min-h-screen text-slate-800">
       {/* Top Header */}
       <AppHeader />
 
       {generationError && studioTab !== 'form' && <div role="alert" className="no-print bg-rose-50 p-3 text-rose-800 text-sm">{generationError}</div>}
       {/* Main Workspace Body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="workspace-body flex flex-1">
         {/* Left 3-Column Sidebar */}
         <SidebarNav />
 
         {/* Dynamic Center/Right Views */}
         {activeView === 'library' && <LessonLibraryView />}
         {activeView === 'guidelines' && <PedagogicalGuidelinesView />}
-        <div style={{display: activeView === 'studio' ? undefined : 'none'}} className="flex-1 min-w-0 flex flex-col xl:flex-row overflow-hidden">
+        <div style={{display: activeView === 'studio' ? undefined : 'none'}} className="studio-workspace flex-1 min-w-0">
             {/* Center Column: Form or A4 Live Document Preview */}
-            <div className="flex-1 min-w-0 flex flex-col overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6">
+            <div className="studio-center min-w-0 flex flex-col">
               {/* Studio Tab Switcher */}
-              <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-200 no-print">
+              <div className="studio-mode flex flex-wrap items-center justify-between gap-3 no-print">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:inline">
                     Chế độ làm việc:
@@ -79,7 +79,7 @@ const MainLayout: React.FC = () => {
             </div>
 
             {/* Right Column: AI Pedagogical Copilot & Live Mindmap */}
-            <div className="w-full xl:w-[420px] 2xl:w-[460px] p-4 md:p-6 border-t xl:border-t-0 xl:border-l border-slate-200 shrink-0 overflow-y-auto no-print bg-slate-50/50">
+            <div className="copilot-column min-w-0 no-print">
               <CopilotPanel key={activeLesson?.id} />
             </div>
           </div>
