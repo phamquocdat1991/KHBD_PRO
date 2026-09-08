@@ -123,11 +123,12 @@ export interface LessonPlan {
   slides?: SlideItem[];
 }
 
-export type GeminiModelId = 'gemini-3.8-flash' | 'gemini-3.6-flash' | 'gemini-2.5-flash';
+export type GeminiModelId = 'gemini-3.8-flash' | 'gemini-3.7-flash' | 'gemini-3.6-flash' | 'gemini-3.5-flash-lite' | 'gemini-2.5-flash';
 
-export interface GeminiModelInfo {
+export interface ModelCardInfo {
   id: GeminiModelId;
   name: string;
   badge: string;
+  badgeColor: string;
   description: string;
 }

@@ -44,39 +44,68 @@ function validateResult(ai: any, params: GenerateParams) {
 async function requestGemini(apiKey: string | undefined, model: GeminiModelId, body: object): Promise<string> {
   const key = apiKey?.trim();
   if (!key) throw new Error('Chưa có Gemini API Key. Mở cấu hình API Key, nhập khóa của thầy/cô rồi tạo lại.');
-  const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(), 180000);
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':key},
-      body: JSON.stringify(body), signal:controller.signal,
-    });
-    if (!response.ok) {
-      const messages: Record<number,string> = {
-        400:'Gemini từ chối yêu cầu. Kiểm tra API Key và định dạng/kích thước tài liệu.',
-        401:'API Key không hợp lệ. Hãy kiểm tra khóa trong cấu hình.',
-        403:'API Key không có quyền gọi Gemini. Kiểm tra quyền và giới hạn của khóa.',
-        404:`Mô hình ${model} không khả dụng với API Key này. Hãy chọn mô hình khác.`,
-        413:'Tài liệu quá lớn. Hãy chia nhỏ nguồn rồi thử lại.',
-        429:'Gemini đã hết hạn mức hoặc đang giới hạn số lượt gọi. Kiểm tra quota rồi thử lại.',
-      };
-      throw new Error(messages[response.status] || `Gemini đang gặp lỗi (HTTP ${response.status}). Vui lòng thử lại sau.`);
+
+  // Chuỗi waterfall fallback kèm latency timeout (gemini-resilience-gateway standard)
+  const waterfall: Array<{ model: string; timeoutMs: number }> = [
+    { model: model || 'gemini-3.8-flash', timeoutMs: 12000 },
+    { model: 'gemini-3.7-flash', timeoutMs: 10000 },
+    { model: 'gemini-3.6-flash', timeoutMs: 10000 },
+    { model: 'gemini-3.5-flash-lite', timeoutMs: 8000 },
+  ].filter((item, idx, arr) => arr.findIndex((x) => x.model === item.model) === idx);
+
+  let lastError: any = null;
+
+  for (let i = 0; i < waterfall.length; i++) {
+    const candidate = waterfall[i];
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(new Error(`Timeout sau ${candidate.timeoutMs}ms`)), candidate.timeoutMs);
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${candidate.model}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        if (response.status === 400 || response.status === 401 || response.status === 403) {
+          const messages: Record<number, string> = {
+            400: 'Gemini từ chối yêu cầu. Kiểm tra định dạng/kích thước tài liệu.',
+            401: 'API Key không hợp lệ. Hãy kiểm tra khóa trong cấu hình.',
+            403: 'API Key không có quyền gọi Gemini. Kiểm tra quyền và giới hạn của khóa.',
+          };
+          throw new Error(messages[response.status] || `Lỗi xác thực (HTTP ${response.status})`);
+        }
+
+        console.warn(`[KHBD Fallback] Model ${candidate.model} gặp HTTP ${response.status}, đang chuyển model dự phòng...`);
+        lastError = new Error(`HTTP ${response.status}`);
+        continue;
+      }
+
+      const data = await response.json();
+      const candidateData = data?.candidates?.[0];
+      if (data?.promptFeedback?.blockReason || (candidateData?.finishReason && candidateData.finishReason !== 'STOP')) {
+        throw new Error(candidateData?.finishReason === 'MAX_TOKENS'
+          ? 'Câu trả lời AI bị cắt do giới hạn độ dài. Chưa lưu bài; hãy giảm số tiết/tài liệu rồi thử lại.'
+          : 'Gemini không trả lời đầy đủ hoặc đã chặn yêu cầu. Hãy kiểm tra lại tài liệu và thử lại.');
+      }
+      const text = candidateData?.content?.parts?.filter((p: any) => typeof p.text === 'string' && !p.thought).map((p: any) => p.text).join('');
+      if (!nonempty(text)) throw new Error('Gemini trả về nội dung rỗng. Chưa tạo bài; hãy thử lại.');
+      return text;
+    } catch (error: any) {
+      if (error?.message?.includes('API Key không hợp lệ') || error?.message?.includes('không có quyền') || error?.message?.includes('từ chối yêu cầu')) {
+        throw error;
+      }
+      lastError = error;
+      console.warn(`[KHBD Fallback] Model ${candidate.model} lỗi: ${error?.message}, đang chuyển model...`);
+      continue;
+    } finally {
+      clearTimeout(timer);
     }
-    const data = await response.json();
-    const candidate = data?.candidates?.[0];
-    if (data?.promptFeedback?.blockReason || (candidate?.finishReason && candidate.finishReason !== 'STOP')) {
-      throw new Error(candidate?.finishReason === 'MAX_TOKENS'
-        ? 'Câu trả lời AI bị cắt do giới hạn độ dài. Chưa lưu bài; hãy giảm số tiết/tài liệu rồi thử lại.'
-        : 'Gemini không trả lời đầy đủ hoặc đã chặn yêu cầu. Hãy kiểm tra lại tài liệu và thử lại.');
-    }
-    const text = candidate?.content?.parts?.filter((p:any)=>typeof p.text==='string' && !p.thought).map((p:any)=>p.text).join('');
-    if (!nonempty(text)) throw new Error('Gemini trả về nội dung rỗng. Chưa tạo bài; hãy thử lại.');
-    return text;
-  } catch (error) {
-    if (controller.signal.aborted) throw new Error('Gemini phản hồi quá lâu. Nội dung nhập vẫn được giữ; hãy thử lại.');
-    if (error instanceof TypeError) throw new Error('Không kết nối được Gemini. Kiểm tra mạng rồi thử lại.');
-    throw error;
-  } finally { clearTimeout(timer); }
+  }
+
+  throw lastError || new Error('Tất cả các mô hình Gemini trong chuỗi dự phòng đều không thể phản hồi. Vui lòng thử lại sau.');
 }
 
 export class GeminiService {
