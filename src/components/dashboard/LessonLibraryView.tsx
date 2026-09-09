@@ -58,8 +58,8 @@ export const LessonLibraryView: React.FC = () => {
     setExportError('');
     try {
       await DocxExportService.exportLessonPlanToDocx(lesson, currentUser);
-    } catch {
-      setExportError('Không xuất được Word. Bài dạy vẫn được giữ trong thư viện; hãy thử lại.');
+    } catch(error) {
+      setExportError(`Không xuất được Word. ${error instanceof Error ? error.message : 'Bài dạy vẫn được giữ trong thư viện; hãy thử lại.'}`);
     }
   };
 

@@ -5,6 +5,7 @@ import { FloatingActionDock } from './FloatingActionDock';
 import { Edit3, Check, Sparkles } from 'lucide-react';
 import { stepLabels, tableHeaders, stepTime } from '../../services/lessonPresentation';
 import { LessonPlan } from '../../types';
+import { LessonImageFigure } from './LessonImageFigure';
 
 export const A4DocumentPreview: React.FC = () => {
   const { currentUser } = useAuth();
@@ -70,6 +71,7 @@ export const A4DocumentPreview: React.FC = () => {
         <section className="space-y-5"><h2 className="font-bold text-[13pt]">{tr('III. TIẾN TRÌNH DẠY HỌC','III. LEARNING ACTIVITIES')}</h2><p className="italic">{tr('Phương pháp','Method')}: {lesson.options.teachingMethod}</p>
           {lesson.activities.map((a,index)=><div key={a.id} className="space-y-2"><h3 className="font-bold bg-gray-100 p-2 border border-black">{editable(a.title,['activities',index,'title'])}{lesson.options.timeline&&a.durationMinutes?` (${a.durationMinutes} ${tr('phút','minutes')})`:''}</h3>
             {(['objective','content','product'] as const).map((field,i)=><div key={field}><strong>{[tr('a) Mục tiêu: ','a) Objective: '),tr('b) Nội dung: ','b) Content: '),tr('c) Sản phẩm: ','c) Product: ')][i]}</strong>{editable(a[field],['activities',index,field])}</div>)}
+            {lesson.images?.filter(image=>image.inserted && image.assetId && image.activityId===a.id).map(image=><LessonImageFigure key={image.id} image={image}/>)}
             <h4 className="font-bold">{tr('d) Tổ chức thực hiện:','d) Implementation:')}</h4>
             {lesson.tableFormat==='1col'?<div className="space-y-3">{labels.map((pair,i)=><div key={i} className="border border-black p-3">{(['Teacher','Student'] as const).map((role,j)=><div key={role}><strong>{pair[j]}: </strong>{editable(a.implementation[`step${i+1}${role}` as keyof typeof a.implementation],['activities',index,'implementation',`step${i+1}${role}`])}</div>)}</div>)}</div>:<table className="w-full border-collapse border border-black text-[11pt] table-fixed"><thead><tr>{headers.map(h=><th key={h} className="border border-black p-2 bg-gray-100">{h}</th>)}</tr></thead><tbody>{steps(index)}</tbody></table>}
           </div>)}

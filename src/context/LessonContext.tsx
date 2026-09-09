@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { LessonPlan, Subject, GradeLevel, GeminiModelId } from '../types';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { LessonPlan, LessonImage, Subject, GradeLevel, GeminiModelId } from '../types';
 import { SAMPLE_LESSONS } from '../data/sampleLessons';
 import { GeminiService, GenerateParams } from '../services/geminiService';
 import { useAuth } from './AuthContext';
@@ -27,6 +27,14 @@ interface LessonContextType {
   setFilterSubject: (subject: string) => void;
   createLessonPlan: (params: Omit<GenerateParams, 'apiKey' | 'modelId'>) => Promise<void>;
   updateActiveLesson: (updates: Partial<LessonPlan>) => void;
+  updateLessonImages: (id: string, images: LessonImage[] | ((previous:LessonImage[])=>LessonImage[])) => void;
+  imageJob: string;
+  startImageJob: (id: string) => boolean;
+  finishImageJob: () => void;
+  imageRecovery: {lessonId:string;idea:LessonImage;data:string} | null;
+  setImageRecovery: (value:{lessonId:string;idea:LessonImage;data:string}|null) => void;
+  imageError: string;
+  setImageError: (value:string) => void;
   deleteLessonPlan: (id: string) => void;
   duplicateLessonPlan: (id: string) => void;
   loadSampleLesson: (id: string) => void;
@@ -38,6 +46,15 @@ const LESSON_LIBRARY_KEY = 'khbd_library_v2';
 
 export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { geminiApiKey } = useAuth();
+  const [imageJob,setImageJob] = useState('');
+  const [imageRecovery,setImageRecovery] = useState<{lessonId:string;idea:LessonImage;data:string}|null>(null);
+  const [imageError,setImageError] = useState('');
+  const imageJobLock = useRef(false);
+  const startImageJob = (id:string) => {
+    if(imageJobLock.current)return false;
+    imageJobLock.current=true;setImageJob(id);return true;
+  };
+  const finishImageJob = () => {imageJobLock.current=false;setImageJob('');};
 
   const [library, setLibrary] = useState<LessonPlan[]>(() => {
     try {
@@ -119,6 +136,12 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setLibrary((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
   };
 
+  const updateLessonImages = (id: string, images: LessonImage[] | ((previous:LessonImage[])=>LessonImage[])) => {
+    const patch = (item:LessonPlan) => item.id === id ? {...item,images:typeof images==='function'?images(item.images||[]):images,updatedAt:new Date().toISOString()} : item;
+    setLibrary(prev => prev.map(patch));
+    setActiveLesson(prev => prev ? patch(prev) : prev);
+  };
+
   const deleteLessonPlan = (id: string) => {
     setLibrary((prev) => prev.filter((item) => item.id !== id));
     if (activeLesson?.id === id) {
@@ -174,6 +197,14 @@ export const LessonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setFilterSubject,
         createLessonPlan,
         updateActiveLesson,
+        updateLessonImages,
+        imageJob,
+        startImageJob,
+        finishImageJob,
+        imageRecovery,
+        setImageRecovery,
+        imageError,
+        setImageError,
         deleteLessonPlan,
         duplicateLessonPlan,
         loadSampleLesson,
