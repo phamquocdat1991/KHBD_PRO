@@ -1,3 +1,4 @@
+import { illustrationUrl } from '../../services/illustrationService';
 import React, { useState } from 'react';
 import { useLesson } from '../../context/LessonContext';
 import { useAuth } from '../../context/AuthContext';
@@ -70,6 +71,7 @@ export const A4DocumentPreview: React.FC = () => {
         <section className="space-y-5"><h2 className="font-bold text-[13pt]">{tr('III. TIẾN TRÌNH DẠY HỌC','III. LEARNING ACTIVITIES')}</h2><p className="italic">{tr('Phương pháp','Method')}: {lesson.options.teachingMethod}</p>
           {lesson.activities.map((a,index)=><div key={a.id} className="space-y-2"><h3 className="font-bold bg-gray-100 p-2 border border-black">{editable(a.title,['activities',index,'title'])}{lesson.options.timeline&&a.durationMinutes?` (${a.durationMinutes} ${tr('phút','minutes')})`:''}</h3>
             {(['objective','content','product'] as const).map((field,i)=><div key={field}><strong>{[tr('a) Mục tiêu: ','a) Objective: '),tr('b) Nội dung: ','b) Content: '),tr('c) Sản phẩm: ','c) Product: ')][i]}</strong>{editable(a[field],['activities',index,field])}</div>)}
+            {a.illustrations?.map((figure,i)=><figure key={i} className="my-3 break-inside-avoid"><img src={illustrationUrl(figure)} alt={figure.caption} width={640} height={360} className="w-full h-auto"/><figcaption className="text-center italic text-sm">{figure.caption}</figcaption></figure>)}
             <h4 className="font-bold">{tr('d) Tổ chức thực hiện:','d) Implementation:')}</h4>
             {lesson.tableFormat==='1col'?<div className="space-y-3">{labels.map((pair,i)=><div key={i} className="border border-black p-3">{(['Teacher','Student'] as const).map((role,j)=><div key={role}><strong>{pair[j]}: </strong>{editable(a.implementation[`step${i+1}${role}` as keyof typeof a.implementation],['activities',index,'implementation',`step${i+1}${role}`])}</div>)}</div>)}</div>:<table className="w-full border-collapse border border-black text-[11pt] table-fixed"><thead><tr>{headers.map(h=><th key={h} className="border border-black p-2 bg-gray-100">{h}</th>)}</tr></thead><tbody>{steps(index)}</tbody></table>}
           </div>)}

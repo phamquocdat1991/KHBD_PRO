@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { DRAFT_KEY, readStudioDraft, DEFAULT_OPTIONS, SUBJECTS, TEXTBOOKS } from '../../services/studioDraft';
+import { DRAFT_KEY, readStudioDraft, DEFAULT_OPTIONS, SUBJECTS, DEFAULT_TEXTBOOK } from '../../services/studioDraft';
 import { useAuth } from '../../context/AuthContext';
 import { prepareSourceDocument, SourceDocument, MAX_SOURCE_BYTES, SOURCE_ACCEPT } from '../../services/sourceDocumentService';
 import { useLesson } from '../../context/LessonContext';
-import { Subject, GradeLevel, TextbookEdition, TableFormat, AdvancedOptions, LessonLanguage } from '../../types';
+import { Subject, GradeLevel, TableFormat, AdvancedOptions, LessonLanguage } from '../../types';
 import { Sparkles, UploadCloud, FileText, Check, Settings2, Sliders, Loader2, Globe, Cpu, Lightbulb, Compass, Calculator, BookOpen, Atom, CalendarDays } from 'lucide-react';
 
 export const LessonConfigForm: React.FC = () => {
@@ -15,7 +15,7 @@ export const LessonConfigForm: React.FC = () => {
   const [title, setTitle] = useState(restoredDraft?.title ?? '');
   const [subject, setSubject] = useState<Subject>(restoredDraft?.subject ?? 'Toán');
   const [grade, setGrade] = useState<GradeLevel>(restoredDraft?.grade ?? 'Lớp 11');
-  const [textbook, setTextbook] = useState<TextbookEdition>(restoredDraft?.textbook ?? 'Cánh Diều');
+  const textbook = DEFAULT_TEXTBOOK;
   const [periodsCount, setPeriodsCount] = useState(restoredDraft?.periodsCount ?? 2);
   const [tableFormat, setTableFormat] = useState<TableFormat>(restoredDraft?.tableFormat ?? '2col');
   const [language, setLanguage] = useState<LessonLanguage>(restoredDraft?.language ?? 'vi');
@@ -42,7 +42,7 @@ export const LessonConfigForm: React.FC = () => {
     'Lớp 10', 'Lớp 11', 'Lớp 12'
   ];
 
-  const textbooks = TEXTBOOKS;
+
 
   const teachingMethodsList = [
     'Phương pháp dạy học tích cực',
@@ -208,23 +208,12 @@ export const LessonConfigForm: React.FC = () => {
         {/* Bộ sách chọn nhanh */}
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-2">Bộ Sách Giáo Khoa</label>
-          <div className="flex flex-wrap gap-2">
-            {textbooks.map((tb) => (
-              <button
-                type="button"
-                key={tb}
-                onClick={() => setTextbook(tb)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                  textbook === tb
-                    ? 'bg-sky-600 text-white shadow-sm font-bold'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
-                }`}
-              >
-                {tb}
-              </button>
-            ))}
-          </div>
+          <p className="text-sm font-medium text-sky-800">{textbook}</p>
         </div>
+        <label className="flex items-start gap-3 text-sm">
+          <input type="checkbox" checked={options.illustrations !== false} onChange={e => setOptions({...options, illustrations:e.target.checked})}/>
+          <span><strong>AI chèn hình minh họa</strong><br/>Hình học, sơ đồ thí nghiệm, sinh học và dụng cụ; có chú thích trong bài và bản Word.</span>
+        </label>
 
         {/* TÙY CHỌN SƯ PHẠM NÂNG CAO (THE USER'S DETAILED REQUIREMENTS) */}
         <div className="pedagogy-options p-5 rounded-2xl bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-50 border border-slate-200 space-y-4">

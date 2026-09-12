@@ -89,3 +89,20 @@ it('answers a Copilot question using the selected lesson and surfaces errors',as
   expect(result).toBe('Câu trả lời kiểm thử từ nguồn.');
   await expect(GeminiService.answerLessonQuestion(SAMPLE_LESSONS[0],'Hỏi nguồn','','gemini-3.8-flash')).rejects.toThrow(/API Key/);
 });
+
+it('forces the textbook and retains activity illustrations from AI', async () => {
+  const ai = aiResult();
+  const figure = {caption:'Tam giác ABC (sơ đồ)',elements:[{kind:'line',x:20,y:20,x2:200,y2:200,text:''}]};
+  (ai.activities[1] as any).illustrations=[figure];
+  let body:any;
+  vi.stubGlobal('fetch',vi.fn(async (_url,init)=>{body=JSON.parse(init.body);return respond(ai);}));
+  const lesson=await GeminiService.generateLessonPlan({...params,textbook:'Cánh Diều'});
+  expect(lesson.textbook).toBe('Kết nối tri thức với cuộc sống');
+  expect(body.systemInstruction.parts[0].text).toContain('Kết nối tri thức với cuộc sống');
+  expect(lesson.activities[1].illustrations).toEqual([figure]);
+});
+it('omits illustrations when disabled', async () => {
+  vi.stubGlobal('fetch',vi.fn(async()=>respond(aiResult())));
+  const lesson=await GeminiService.generateLessonPlan({...params,options:{...params.options,illustrations:false}});
+  expect(lesson.activities.every(a=>a.illustrations===undefined)).toBe(true);
+});

@@ -19,9 +19,18 @@ export function lessonResponseSchema(options: AdvancedOptions) {
         type: 'object',
         properties: {
           ...Object.fromEntries(activityFields.map(key => [key, text])),
+          ...(options.illustrations !== false ? {illustrations: {
+            type:'array', maxItems:2, items:{type:'object', properties:{
+              caption:text, elements:{type:'array', minItems:1, maxItems:100, items:{type:'object', properties:{
+                kind:{type:'string',enum:['line','ellipse','rect','text']},
+                x:{type:'number',minimum:0,maximum:640}, y:{type:'number',minimum:0,maximum:360},
+                x2:{type:'number',minimum:0,maximum:640}, y2:{type:'number',minimum:0,maximum:360}, text,
+              },required:['kind','x','y','x2','y2','text']}},
+            },required:['caption','elements']},
+          }} : {}),
           durationMinutes: { type: 'integer', minimum: 1 },
         },
-        required: [...activityFields, ...(options.timeline ? ['durationMinutes'] : [])],
+        required: [...activityFields, ...(options.illustrations !== false ? ['illustrations'] : []), ...(options.timeline ? ['durationMinutes'] : [])],
       },
     },
     worksheetsAppendix: list(options.worksheets),

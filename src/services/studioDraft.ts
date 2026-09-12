@@ -1,4 +1,5 @@
 import type { AdvancedOptions, GradeLevel, LessonLanguage, Subject, TableFormat, TextbookEdition } from '../types';
+export const DEFAULT_TEXTBOOK = 'Kết nối tri thức với cuộc sống' as const;
 export const DRAFT_KEY = 'khbd_studio_draft_v1';
 export const SUBJECTS: Subject[] = ['Toán', 'Ngữ văn', 'Tiếng Anh', 'Khoa học tự nhiên', 'Vật lí', 'Hóa học', 'Sinh học', 'Lịch sử', 'Địa lí', 'Lịch sử và Địa lí', 'Tin học', 'Công nghệ', 'Giáo dục công dân', 'Giáo dục kinh tế và pháp luật', 'Giáo dục thể chất', 'Âm nhạc', 'Mĩ thuật', 'Hoạt động trải nghiệm, hướng nghiệp'];
 export const TEXTBOOKS: TextbookEdition[] = ['Kết nối tri thức với cuộc sống', 'Cánh Diều', 'Chân trời sáng tạo', 'Bộ sách hiện hành khác'];
@@ -22,7 +23,8 @@ export function readStudioDraft(): StudioDraft | null {
       || !value.options || Object.entries(DEFAULT_OPTIONS).some(([key, fallback]) => typeof value.options[key] !== typeof fallback)) return null;
     // Pick only known fields: a draft never restores credentials or source-file bytes.
     const options = Object.fromEntries(Object.keys(DEFAULT_OPTIONS).map(key => [key, value.options[key]])) as unknown as AdvancedOptions;
-    return { version: 1, title: value.title, subject: value.subject, grade: value.grade, textbook: value.textbook,
+    options.illustrations = value.options.illustrations !== false;
+    return { version: 1, title: value.title, subject: value.subject, grade: value.grade, textbook: DEFAULT_TEXTBOOK,
       periodsCount: value.periodsCount, tableFormat: value.tableFormat, language: value.language, coreContent: value.coreContent, options };
   } catch { return null; }
 }

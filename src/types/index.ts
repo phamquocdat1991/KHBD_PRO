@@ -38,6 +38,7 @@ export interface TeacherProfile {
 }
 
 export interface AdvancedOptions {
+  illustrations?: boolean;
   nls: boolean; // Tích hợp NLS thông tư 02/2025 & CV 3456/BGDĐT
   aiEducation: boolean; // Tích hợp giáo dục AI Khung QĐ 2422/QĐ-BGDĐT
   stemLesson: boolean; // Giáo án bài học STEM CV 3089/908
@@ -50,7 +51,13 @@ export interface AdvancedOptions {
   worksheets: boolean; // Tạo phiếu học tập kèm theo
 }
 
+export interface LessonIllustration {
+  caption: string;
+  elements: { kind: "line" | "ellipse" | "rect" | "text"; x: number; y: number; x2: number; y2: number; text: string }[];
+}
+
 export interface PedagogicalActivity {
+  illustrations?: LessonIllustration[];
   id: string;
   activityNumber: number;
   title: string; // Hoạt động 1: Khởi động, Hoạt động 2: Hình thành kiến thức...
