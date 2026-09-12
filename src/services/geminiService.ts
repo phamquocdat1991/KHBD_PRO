@@ -1,5 +1,7 @@
 import { LessonPlan, GeminiModelId, Subject, GradeLevel, TextbookEdition, TableFormat, AdvancedOptions, LessonLanguage, MindmapNode } from '../types';
 import { SourceDocument, sourceText, MAX_SOURCE_BYTES } from './sourceDocumentService';
+import { DEFAULT_TEXTBOOK } from './studioDraft';
+import { validateIllustrations } from './illustrationService';
 import { lessonResponseSchema } from './lessonResponseSchema';
 
 export interface GenerateParams {
@@ -110,6 +112,7 @@ async function requestGemini(apiKey: string | undefined, model: GeminiModelId, b
 
 export class GeminiService {
   static async generateLessonPlan(params: GenerateParams, onProgress?: (status:string)=>void): Promise<LessonPlan> {
+    params = {...params, textbook: DEFAULT_TEXTBOOK};
     if (!params.apiKey?.trim()) throw new Error('Chưa có Gemini API Key. Mở cấu hình API Key, nhập khóa của thầy/cô rồi tạo lại.');
     if (!params.title.trim() || !Number.isInteger(params.periodsCount) || params.periodsCount < 1 || params.periodsCount > 4) throw new Error('Kiểm tra tên bài dạy và số tiết (1–4).');
     const docs = params.sourceDocuments || [];
@@ -134,6 +137,7 @@ Thực hiện đúng phương pháp, khởi động, tích hợp được chọn
 ${params.options.timeline?`Tổng thời lượng đúng ${totalMinutes} phút. durationMinutes là số nguyên dương.`:'Không hiển thị phân bổ phút; có thể bỏ durationMinutes.'}
 ${params.options.worksheets?'Phải có worksheetsAppendix với câu hỏi/bài tập thực tế từ nguồn và đáp án chính xác.':'worksheetsAppendix để trống.'}
 ${params.options.mathFormulas?'Công thức dùng Unicode dễ đọc, kiểm tra ký hiệu và phép tính.':'Dùng văn bản rõ ràng, không tự thêm định dạng công thức đặc biệt.'}
+${params.options.illustrations !== false ? 'Mỗi hoạt động có illustrations (mảng, tối đa 2 hình; để [] nếu không cần). Toàn bài cần ít nhất một hình minh họa có ý nghĩa khi chủ đề liên quan hình học, thí nghiệm, sinh học hoặc dụng cụ. Mỗi hình gồm caption và elements. Vẽ trên khung 640×360, tọa độ từ 0 đến 640 theo x và 0 đến 360 theo y. Mỗi element có kind (line, ellipse, rect, text), x,y,x2,y2,text. line nối (x,y) tới (x2,y2); rect và ellipse nằm trong hộp giới hạn (x,y)-(x2,y2); text đặt ở (x,y), mỗi nhãn tối đa 60 ký tự. Dùng đoạn thẳng tạo đa giác, đường nối có nhãn để mô tả thí nghiệm và cấu trúc sinh học. Vẽ đúng quan hệ hình học, ghi nhãn đỉnh, bộ phận, dụng cụ; không vẽ trang trí chung chung. Tránh chồng nhãn, chừa lề 20px. Chú thích phải nói rõ nếu hình chỉ là sơ đồ không theo tỉ lệ. Kiểm tra hình khớp số liệu, nội dung và câu hỏi. Không khẳng định hình sao chép từ SGK.' : 'Không tạo illustrations.'}
 Không thêm ký hiệu Markdown trang trí. Xuất JSON theo mẫu sau, activities phải có đúng 4 phần tử (mẫu chỉ minh họa một phần tử), mindmap và slides phải bám nội dung bài thực tế:
 ${JSON.stringify(sample)}`;
     const parts: any[] = [{text:content || 'Giáo viên chưa cung cấp văn bản nguồn.'}];
@@ -148,6 +152,7 @@ ${JSON.stringify(sample)}`;
     try { ai=JSON.parse(raw.trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'')); }
     catch { throw new Error('Gemini trả về JSON không hợp lệ. Chưa lưu bài; hãy thử lại.'); }
     validateResult(ai,params);
+    if (params.options.illustrations !== false) ai.activities.forEach((a:any) => validateIllustrations(a.illustrations));
     const id = `lesson-${crypto.randomUUID()}`;
     const timestamp = new Date().toISOString();
     const durations = ai.activities.map((a:any)=>a.durationMinutes || 1);
@@ -166,7 +171,7 @@ ${JSON.stringify(sample)}`;
         stemCompetencies:params.options.stemLesson?ai.stemCompetencies:undefined,qualities:ai.qualities},
       teachingEquipment:{teacher:ai.equipmentTeacher,student:ai.equipmentStudent},
       activities:ai.activities.map((a:any,i:number)=>({id:`${id}-act-${i+1}`,activityNumber:i+1,title:a.title,durationMinutes:params.options.timeline?(sum===totalMinutes?a.durationMinutes:scaled[i]):undefined,
-        objective:a.objective,content:a.content,product:a.product,implementation:Object.fromEntries(stepKeys.map(k=>[k,a[k]]))})),
+        objective:a.objective,content:a.content,product:a.product,illustrations:params.options.illustrations !== false?a.illustrations:undefined,implementation:Object.fromEntries(stepKeys.map(k=>[k,a[k]]))})),
       worksheetsAppendix:params.options.worksheets?ai.worksheetsAppendix:[],mindmap:mindmap(ai.mindmap,`${id}-mm`),
       slides:ai.slides.map((s:any,i:number)=>({slideNumber:i+1,title:s.title,subtitle:typeof s.subtitle==='string'?s.subtitle:undefined,bullets:s.bullets,notesForTeacher:typeof s.notesForTeacher==='string'?s.notesForTeacher:undefined})),
     };

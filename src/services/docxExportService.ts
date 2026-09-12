@@ -1,4 +1,5 @@
-import {Document,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,BorderStyle,Packer} from 'docx';
+import { illustrationPng } from './illustrationService';
+import {Document,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,BorderStyle,Packer,ImageRun} from 'docx';
 import {saveAs} from 'file-saver';
 import {LessonPlan,TeacherProfile} from '../types';
 import {stepLabels,tableHeaders,stepTime} from './lessonPresentation';
@@ -29,6 +30,9 @@ export class DocxExportService {
     const labels=stepLabels(en),headers=tableHeaders(lesson);
     for(const a of lesson.activities){
       children.push(p(a.title+(lesson.options.timeline&&a.durationMinutes?` (${a.durationMinutes} ${tr('phút','minutes')})`:''),true),p(`${tr('a) Mục tiêu:','a) Objective:')} ${a.objective}`),p(`${tr('b) Nội dung:','b) Content:')} ${a.content}`),p(`${tr('c) Sản phẩm:','c) Product:')} ${a.product}`),p(tr('d) Tổ chức thực hiện:','d) Implementation:'),true));
+      for (const figure of a.illustrations || []) {
+        children.push(new Paragraph({alignment:AlignmentType.CENTER,children:[new ImageRun({type:'png',data:await illustrationPng(figure),transformation:{width:540,height:304},altText:{title:figure.caption,description:figure.caption,name:'Hình minh họa'}})]}),p(figure.caption,false,true));
+      }
       const rows=[new TableRow({tableHeader:true,children:headers.map(h=>cell([h],true))})];
       labels.forEach((pair,i)=>{
         const teacherText=a.implementation[`step${i+1}Teacher` as keyof typeof a.implementation];

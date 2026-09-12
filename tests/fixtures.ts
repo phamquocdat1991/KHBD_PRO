@@ -11,7 +11,7 @@ export function aiResult() {
     generalCompetencies: s.objectives.generalCompetencies, specificCompetencies: s.objectives.specificCompetencies,
     digitalCompetencies: ['Đọc bảng số liệu.'], aiCompetencies: ['Kiểm tra câu trả lời AI.'], stemCompetencies: [],
     qualities: s.objectives.qualities, equipmentTeacher: s.teachingEquipment.teacher, equipmentStudent: s.teachingEquipment.student,
-    activities: s.activities.map(a => ({ ...a, ...a.implementation })),
+    activities: s.activities.map(a => ({ ...a, ...a.implementation, illustrations: [] })),
     worksheetsAppendix: ['So sánh khay A, B, C — SOURCE-58319.'], mindmap: s.mindmap, slides: s.slides,
   };
 }

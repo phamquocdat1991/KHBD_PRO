@@ -66,3 +66,15 @@ it('sends an inline Copilot question with the active lesson context and renders 
   await waitFor(() => expect(screen.getByText('Gợi ý hoạt động được kiểm thử 487')).not.toBeNull());
   expect(JSON.stringify(fetchMock.mock.calls)).toContain('Phương trình lượng giác cơ bản');
 });
+
+it('migrates an old textbook draft and persists the illustration preference', () => {
+  const first=render(<App/>);
+  const old=JSON.parse(localStorage.getItem(DRAFT_KEY)!);
+  first.unmount();
+  localStorage.setItem(DRAFT_KEY,JSON.stringify({...old,title:'Bài cũ',textbook:'Cánh Diều'}));
+  render(<App/>);
+  expect(readStudioDraft()?.textbook).toBe('Kết nối tri thức với cuộc sống');
+  expect(screen.queryByRole('button',{name:'Cánh Diều'})).toBeNull();
+  fireEvent.click(screen.getByRole('checkbox',{name:/AI chèn hình minh họa/}));
+  expect(readStudioDraft()?.options.illustrations).toBe(false);
+});
