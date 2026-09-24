@@ -4,13 +4,13 @@ export function stepLabels(english:boolean) {
     ['Step 1: Assign task','Step 1: Receive task'],['Step 2: Guide and support','Step 2: Perform task'],
     ['Step 3: Organize reports','Step 3: Report and discuss'],['Step 4: Assess and conclude','Step 4: Consolidate learning'],
   ] : [
-    ['Bước 1: Chuyển giao nhiệm vụ','Bước 1: Tiếp nhận nhiệm vụ'],['Bước 2: Theo dõi, hỗ trợ','Bước 2: Thực hiện nhiệm vụ'],
-    ['Bước 3: Tổ chức báo cáo','Bước 3: Báo cáo, thảo luận'],['Bước 4: Kết luận, nhận định','Bước 4: Ghi nhận kiến thức'],
+    ['B1. Chuyển giao nhiệm vụ','B1. Chuyển giao nhiệm vụ'],['B2. Thực hiện nhiệm vụ','B2. Thực hiện nhiệm vụ'],
+    ['B3. Báo cáo, thảo luận','B3. Báo cáo, thảo luận'],['B4. Kết luận, nhận định','B4. Kết luận, nhận định'],
   ];
 }
 export function tableHeaders(lesson:LessonPlan):string[] {
   const en=lesson.language==='en';
-  const pair=en?['TEACHER ACTIVITIES','STUDENT ACTIVITIES']:['HOẠT ĐỘNG CỦA GIÁO VIÊN','HOẠT ĐỘNG CỦA HỌC SINH'];
+  const pair=en?['TEACHER ACTIVITIES','STUDENT ACTIVITIES']:['HOẠT ĐỘNG CỦA GV','HOẠT ĐỘNG CỦA HS'];
   return lesson.tableFormat==='4col'?[en?'TIME':'THỜI GIAN',...pair,en?'PRODUCT':'SẢN PHẨM']:
     lesson.tableFormat==='3col'?[...pair,en?'PRODUCT':'SẢN PHẨM']:pair;
 }

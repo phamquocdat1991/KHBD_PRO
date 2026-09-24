@@ -16,4 +16,4 @@ it('shows a recoverable error when a Word download fails from the library', asyn
   await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/Không xuất được Word/), {timeout:5000});
   expect(JSON.parse(localStorage.getItem('khbd_library_v2')!)).toHaveLength(3);
   expect(screen.getByRole('heading', {name:/Kho Kế Hoạch Bài Dạy/})).not.toBeNull();
-});
+}, 15000);

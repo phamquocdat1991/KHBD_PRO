@@ -7,6 +7,7 @@ import { PptxExportService } from '../../services/pptxExportService';
 import { Bot, GitBranch, Presentation, Send, FileDown } from 'lucide-react';
 import { LessonMindmap } from './LessonMindmap';
 import { MindmapNode } from '../../types';
+import { MathText } from '../common/MathText';
 
 export const CopilotPanel: React.FC = () => {
   const { currentUser, geminiApiKey } = useAuth();
@@ -196,7 +197,7 @@ export const CopilotPanel: React.FC = () => {
                         : 'bg-slate-100 text-slate-800 rounded-tl-none border border-slate-200'
                     }`}
                   >
-                    {m.text}
+                    <MathText text={m.text} />
                   </div>
                 </div>
               ))}

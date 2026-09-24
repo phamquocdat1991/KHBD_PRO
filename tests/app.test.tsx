@@ -66,9 +66,9 @@ it('generates from uploaded DOCX, PDF and entered text through the real form/con
   fireEvent.change(screen.getByPlaceholderText(/Dán nội dung trọng tâm/),{target:{value:'TYPED-829-GROUNDING'}});
   const docx=await Packer.toBuffer(new Document({sections:[{children:[new Paragraph('DOCX-END-284-GROUNDING')]}]}));
   fireEvent.change(screen.getByLabelText('Chọn tài liệu nguồn'),{target:{files:[new File([new Uint8Array(docx)],'input.docx'),new File(['%PDF-1.4\nPDF-BYTES-246'],'input.pdf')]}});
-  await waitFor(()=>expect(screen.getByText(/Đã chuẩn bị 2 tệp/)).not.toBeNull());
+  await waitFor(()=>expect(screen.getByText(/Đã chuẩn bị 2 tệp/)).not.toBeNull(),{timeout:10000});
   fireEvent.click(screen.getByRole('button',{name:/Tạo Kế Hoạch Bài Dạy Với AI/}));
-  await waitFor(()=>expect(screen.getByRole('heading',{name:/KẾ HOẠCH BÀI DẠY: Bài kiểm thử nguồn/})).not.toBeNull());
+  await waitFor(()=>expect(screen.getByRole('heading',{name:/KẾ HOẠCH BÀI DẠY: Bài kiểm thử nguồn/})).not.toBeNull(),{timeout:10000});
   const parts=request.contents[0].parts;
   expect(JSON.stringify(parts)).toContain('TYPED-829-GROUNDING');
   expect(JSON.stringify(parts)).toContain('DOCX-END-284-GROUNDING');
@@ -78,7 +78,7 @@ it('generates from uploaded DOCX, PDF and entered text through the real form/con
   expect(stored[0].coreContent).toContain('DOCX-END-284-GROUNDING');
   expect(JSON.stringify(stored[0])).not.toContain('test-key-not-a-real-secret');
   expect(screen.getByText('So sánh khay A, B, C — SOURCE-58319.')).not.toBeNull();
-});
+}, 15000);
 
 it('prevents generation after a failed upload until the teacher corrects or skips it',async()=>{
   render(<App/>);

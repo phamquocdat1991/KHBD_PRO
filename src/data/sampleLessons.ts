@@ -193,6 +193,10 @@ export const SAMPLE_LESSONS: LessonPlan[] = [
           'Xác định thời điểm đạt độ cao 15m'
         ]
       }
+    ],
+    worksheetsAppendix: [
+      'PHIẾU HỌC TẬP SỐ 1: KHÁM PHÁ CÔNG THỨC NGHIỆM SIN X = M\n1. Dùng GeoGebra quan sát tương giao giữa đồ thị $y = \\sin x$ và đường thẳng $y = m$.\n2. Khi $|m| \\le 1$, viết họ tất cả các nghiệm: $x = \\alpha + k2\\pi$ hoặc $x = \\pi - \\alpha + k2\\pi\\;(k \\in \\mathbb{Z})$.\n3. Áp dụng giải phương trình: $\\sin x = \\frac{1}{2}$.',
+      'PHIẾU HỌC TẬP SỐ 2: VẬN DỤNG THỰC TẾ\n1. Thiết lập phương trình dao động đu quay: $\\sin(\\frac{\\pi t}{30}) = \\frac{1}{2}$ với $0 \\le t \\le 60$ giây.\n2. Xác định các thời điểm cabin đạt độ cao 15 mét.'
     ]
   },
   {
@@ -246,7 +250,7 @@ export const SAMPLE_LESSONS: LessonPlan[] = [
         activityNumber: 1,
         title: 'Hoạt động 1: Khởi động (Trải nghiệm Thư pháp)',
         durationMinutes: 8,
-        objective: 'Tạo không khí văn hóa truyền thống, gợi mở thú chơi chữ thanh tao.',
+        objective: 'Tạo không khí văn hóa truyền thống, gợi mở thú chơi chữ thanh cao và trang nhã.',
         content: 'Xem video clip ngắn về ông đồ viết thư pháp ngày Tết.',
         product: 'Cảm xúc và suy nghĩ ban đầu của HS về câu đối và người viết chữ đẹp.',
         implementation: {
@@ -337,7 +341,113 @@ export const SAMPLE_LESSONS: LessonPlan[] = [
           step4Teacher: 'GV chốt yêu cầu: Chuyển sang bước nghiên cứu kiến thức nền Định luật III Newton.',
           step4Student: 'HS sẵn sàng bước vào hoạt động tiếp theo.'
         }
+      },
+      {
+        id: 'stem-act-2',
+        activityNumber: 2,
+        title: 'Hoạt động 2: Nghiên cứu kiến thức nền và Đề xuất giải pháp (Thiết kế)',
+        durationMinutes: 35,
+        objective: 'Nắm vững Định luật III Newton về tương tác lực: $\\vec{F}_{AB} = -\\vec{F}_{BA}$, vẽ được bản thiết kế xe phản lực với kích thước và thông số cụ thể.',
+        content: 'Nghiên cứu nguyên lý phản lực khi khí thoát ra khỏi bóng bay; tính toán phân bố tải trọng và giảm ma sát trục bánh xe.',
+        product: 'Bản vẽ kĩ thuật mô hình xe phản lực trên khổ giấy A3 kèm bảng kê vật liệu tái chế cần dùng.',
+        implementation: {
+          step1Teacher: 'GV hướng dẫn HS thí nghiệm ảo và ôn tập định luật III Newton, giải thích cơ chế phụt khí sinh phản lực.',
+          step1Student: 'HS ghi chép công thức định luật III Newton, phân tích lực tác dụng lên thân xe.',
+          step2Teacher: 'GV giao nhiệm vụ vẽ bản thiết kế: yêu cầu có kích thước (dài ≤ 20cm, rộng ≤ 10cm), vị trí gắn bóng và ống dẫn khí.',
+          step2Student: 'Nhóm làm việc: Kiến trúc sư phác thảo bản vẽ, các thành viên phản biện và hoàn thiện phương án tối ưu.',
+          step3Teacher: 'GV tổ chức cho các nhóm dán bản vẽ lên bảng và thuyết minh nhanh (2 phút/nhóm).',
+          step3Student: 'Đại diện nhóm bảo vệ ý tưởng thiết kế, giải thích vì sao chọn hình dáng khí động học thuôn nhọn.',
+          step4Teacher: 'GV nhận xét, góp ý chỉnh sửa về vị trí đặt trọng tâm xe để chống lật khi tăng tốc.',
+          step4Student: 'Các nhóm tiếp thu góp ý, hoàn thiện bản vẽ kỹ thuật cuối cùng trước khi chế tạo.'
+        }
+      },
+      {
+        id: 'stem-act-3',
+        activityNumber: 3,
+        title: 'Hoạt động 3: Chế tạo mẫu thử nghiệm và Đánh giá (Thực hành)',
+        durationMinutes: 40,
+        objective: 'Lắp ráp hoàn chỉnh mô hình xe theo bản thiết kế; tiến hành thử nghiệm, đo đạc quãng đường bằng thước laser và ứng dụng Phyphox.',
+        content: 'Chế tạo xe từ vỏ chai và nắp chai nhựa; thử nghiệm xả khí cho xe chạy trên đường đua lớp học.',
+        product: 'Chiếc xe đồ chơi phản lực bóng bay hoàn chỉnh và bảng nhật ký thử nghiệm (quãng đường, độ lệch hướng, thời gian chạy).',
+        implementation: {
+          step1Teacher: 'GV nhắc nhở quy tắc an toàn khi dùng kéo và súng bắn keo, bàn giao vật liệu cho các nhóm.',
+          step1Student: 'Các nhóm nhận vật liệu, phân công thành viên cắt gọt trục bánh xe, gắn ống thổi bóng bay.',
+          step2Teacher: 'GV giám sát quá trình thao tác kỹ thuật, hỗ trợ căn chỉnh độ thẳng của 2 trục bánh xe.',
+          step2Student: 'HS lắp ráp từng bộ phận, kiểm tra độ quay trơn của bánh xe trước khi gắn cố định bóng bay.',
+          step3Teacher: 'GV mở đường đua thử nghiệm 5 mét có vạch chia centimet; tổ chức cho các nhóm chạy thử lần 1.',
+          step3Student: 'Nhóm tiến hành bơm bóng bay (đường kính 15cm), đặt xe tại vạch xuất phát, mở van xả khí và bấm giờ.',
+          step4Teacher: 'GV ghi nhận kết quả: các nhóm chưa đạt cự ly 3m hoặc bị quay tròn cần tiến hành hiệu chỉnh.',
+          step4Student: 'HS ghi chép số liệu đo lường, phân tích nguyên nhân xe chạy lệch để sửa chữa kịp thời.'
+        }
+      },
+      {
+        id: 'stem-act-4',
+        activityNumber: 4,
+        title: 'Hoạt động 4: Chia sẻ, Thảo luận và Điều chỉnh (Báo cáo & Hoàn thiện)',
+        durationMinutes: 35,
+        objective: 'Báo cáo kết quả thử nghiệm chính thức; phân tích các yếu tố ảnh hưởng đến vận tốc xe; liên hệ ứng dụng phản lực trong đời sống.',
+        content: 'Cuộc đua xe phản lực STEM chung kết; trình bày bài học kinh nghiệm và phương án nâng cấp động cơ 2 bóng bay.',
+        product: 'Bài thuyết trình nhóm và sản phẩm xe đạt chuẩn tiêu chí kỹ thuật (quãng đường ≥ 3m, chạy thẳng).',
+        implementation: {
+          step1Teacher: 'GV tổ chức vòng thi đấu chung kết giữa các nhóm: mỗi đội có 2 lượt chạy lấy kết quả tốt nhất.',
+          step1Student: 'Các đội thi đấu chính thức; cổ vũ và ghi nhận thành tích của nhóm bạn.',
+          step2Teacher: 'GV hướng dẫn lớp thảo luận: "Yếu tố nào quyết định quãng đường đi xa nhất của xe?"',
+          step2Student: 'HS thảo luận, chỉ ra: đường kính ống xả, khối lượng thân xe và độ ma sát của trục bánh xe.',
+          step3Teacher: 'GV mời nhóm đạt thành tích tốt nhất chia sẻ bí quyết cân chỉnh cân bằng trọng tâm xe.',
+          step3Student: 'Đội thắng cuộc báo cáo quy trình tối ưu: bôi trơn trục que xiên bằng sáp nến để giảm ma sát lăn.',
+          step4Teacher: 'GV tổng kết bài học STEM, đánh giá theo phiếu tiêu chí Rubric và liên hệ với tên lửa vũ trụ.',
+          step4Student: 'HS tự đánh giá đóng góp cá nhân trong nhóm và dọn dẹp vệ sinh khu vực chế tạo.'
+        }
       }
+    ],
+    mindmap: {
+      id: 'stem-mm-root',
+      label: 'DỰ ÁN XE PHẢN LỰC KHÍ STEM',
+      children: [
+        {
+          id: 'stem-mm-1',
+          label: '1. Kiến thức nền tảng',
+          children: [
+            { id: 'stem-mm-1-1', label: 'Định luật III Newton (F_AB = -F_BA)' },
+            { id: 'stem-mm-1-2', label: 'Nguyên lý phản lực phụt khí' },
+            { id: 'stem-mm-1-3', label: 'Lực ma sát lăn và ma sát trượt' }
+          ]
+        },
+        {
+          id: 'stem-mm-2',
+          label: '2. Quy trình thiết kế EDP',
+          children: [
+            { id: 'stem-mm-2-1', label: 'Xác định tiêu chí (quãng đường ≥ 3m)' },
+            { id: 'stem-mm-2-2', label: 'Bản vẽ kĩ thuật & lựa chọn vật liệu' },
+            { id: 'stem-mm-2-3', label: 'Chế tạo mẫu thử & Đo lường Phyphox' },
+            { id: 'stem-mm-2-4', label: 'Thử nghiệm & Cải tiến trọng tâm' }
+          ]
+        }
+      ]
+    },
+    slides: [
+      {
+        slideNumber: 1,
+        title: 'DỰ ÁN STEM: XE ĐỒ CHƠI CHẠY BẰNG PHẢN LỰC KHÍ',
+        subtitle: 'Môn Khoa học tự nhiên 7 – Bộ Cánh Diều',
+        bullets: [
+          'Ứng dụng Định luật III Newton',
+          'Vận dụng quy trình thiết kế kĩ thuật 5 bước',
+          'Tích hợp cảm biến đo lường số Phyphox'
+        ]
+      },
+      {
+        slideNumber: 2,
+        title: 'Tiêu chí đánh giá sản phẩm',
+        bullets: [
+          'Chạy thẳng theo quỹ đạo đường đua',
+          'Quãng đường di chuyển tối thiểu 3 mét',
+          'Vật liệu chế tạo hoàn toàn từ rác thải tái chế'
+        ]
+      }
+    ],
+    worksheetsAppendix: [
+      'PHIẾU HỌC TẬP STEM: BẢN THIẾT KẾ VÀ NHẬT KÝ THỬ NGHIỆM XE PHẢN LỰC\n1. Bản vẽ kĩ thuật mô hình xe: Ghi rõ chiều dài, chiều rộng, đường kính bánh xe và góc nghiêng của ống xả khí.\n2. Bảng kết quả thử nghiệm 3 lần chạy (Đo quãng đường bằng thước dây hoặc Phyphox):\n   - Lần 1: Quãng đường _____ m; Hiện tượng: ____________________\n   - Lần 2 (Sau cải tiến): Quãng đường _____ m; Hiện tượng: ____________________\n   - Lần 3 (Chung kết): Quãng đường _____ m; Tốc độ trung bình: _____ m/s.\n3. Nhóm đã thực hiện những cải tiến kỹ thuật nào để xe chạy xa hơn và không bị lệch hướng?'
     ]
   }
 ];
